@@ -12,7 +12,9 @@ pub Expr: Box<Expression> =
 /////////////////////
 // Values ///////////
 
-Int: i32 = <s:r"-?[0-9]+"> => i32::from_str(s).unwrap();
+// only recognize positive numbers
+// negatives ones will be recognised as a positive and a unary -
+Int: u32 = <s:r"[0-9]+"> => u32::from_str(s).unwrap();
 
 
 ////////////////////////////////////

@@ -42,7 +42,7 @@ pub enum Ternop
 #[derive(Debug, PartialEq)]
 pub enum Terminal
 {
-    Int(i32),
+    Int(u32),
     Float(f32),
     Bool(bool),
     Char(char),
@@ -175,7 +175,7 @@ impl Terminal
 {
     fn random() -> Self
     {
-	Terminal::Int(rand::random::<i32>())
+	Terminal::Int(rand::random::<u32>())
     }
 }
 

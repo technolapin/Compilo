@@ -4,35 +4,41 @@ use compilo::ast::*;
 
 use compilo::parser;
 
+fn foo(s: &str)
+{
+    let parsed = parser::ExprParser::new().parse(s);
+    println!("{} {:?}", s, parsed);
+}
+
 fn main()
 {
-    println!("{:?}", parser::ExprParser::new().parse("--1"));
-    println!("{:?}", parser::ExprParser::new().parse("++1"));
-    println!("{:?}", parser::ExprParser::new().parse("1--"));
-    println!("{:?}", parser::ExprParser::new().parse("1++"));
-    println!("{:?}", parser::ExprParser::new().parse("--1"));
-    println!("{:?}", parser::ExprParser::new().parse("++1"));
-    println!("{:?}", parser::ExprParser::new().parse("-1"));
-    println!("{:?}", parser::ExprParser::new().parse("+1"));
-    println!("{:?}", parser::ExprParser::new().parse("!1"));
-    println!("{:?}", parser::ExprParser::new().parse("1+1"));
-    println!("{:?}", parser::ExprParser::new().parse("1-1"));
-    println!("{:?}", parser::ExprParser::new().parse("1*1"));
-    println!("{:?}", parser::ExprParser::new().parse("1/1"));
-    println!("{:?}", parser::ExprParser::new().parse("1%1"));
-    println!("{:?}", parser::ExprParser::new().parse("1<1"));
-    println!("{:?}", parser::ExprParser::new().parse("1>1"));
-    println!("{:?}", parser::ExprParser::new().parse("1<=1"));
-    println!("{:?}", parser::ExprParser::new().parse("1>=1"));
-    println!("{:?}", parser::ExprParser::new().parse("1==1"));
-    println!("{:?}", parser::ExprParser::new().parse("1!=1"));
-    println!("{:?}", parser::ExprParser::new().parse("1&1"));
-    println!("{:?}", parser::ExprParser::new().parse("1^1"));
-    println!("{:?}", parser::ExprParser::new().parse("1|1"));
-    println!("{:?}", parser::ExprParser::new().parse("1&&1"));
-    println!("{:?}", parser::ExprParser::new().parse("1||1"));
+    foo("--1");
+    foo("++1");
+    foo("1--");
+    foo("1++");
+    foo("--1");
+    foo("++1");
+    foo("-1");
+    foo("+1");
+    foo("!1");
+    foo("1+1");
+    foo("1-1");
+    foo("1*1");
+    foo("1/1");
+    foo("1%1");
+    foo("1<1");
+    foo("1>1");
+    foo("1<=1");
+    foo("1>=1");
+    foo("1==1");
+    foo("1!=1");
+    foo("1&1");
+    foo("1^1");
+    foo("1|1");
+    foo("1&&1");
+    foo("1||1");
 
-    println!("{:?}", parser::ExprParser::new().parse("if 1 {1} else {1}"));
+    foo("if 1 {1} else {1}");
 
 
     if true
