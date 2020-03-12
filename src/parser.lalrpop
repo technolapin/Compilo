@@ -33,8 +33,9 @@ Precedency1: Box<Expression> =
 
 Precedency2: Box<Expression> =
 {
-	Precedency1
-
+	Precedency1,
+	SufixIncrementExpr,
+	SufixDecrementExpr
 }
 
 // moins unaire, not
@@ -42,7 +43,10 @@ Precedency3: Box<Expression> =
 {
 	Precedency2,
 	MinusExpr,
+	PlusExpr,
 	NotExpr,
+	PrefixIncrementExpr,
+	PrefixDecrementExpr
 }
 
 Precedency4: Box<Expression> =
@@ -51,13 +55,12 @@ Precedency4: Box<Expression> =
 
 }
 
-// mult div modulo
 Precedency5: Box<Expression> =
 {
 	Precedency4,
 	MultExpr,
 	DivExpr,
-
+	ModuloExpr
 }
 
 // add sub
@@ -164,10 +167,30 @@ ParenthesisExpr: Box<Expression> =
 
 // 1
 // 2
+SufixDecrementExpr: Box<Expression> =
+{
+	<a: Precedency2> "--" => Box::new(Expression::Unary(Unop::Decrement, a))
+}
+SufixIncrementExpr: Box<Expression> =
+{
+	<a: Precedency2> "++" => Box::new(Expression::Unary(Unop::Increment, a))
+}
 // 3
+PrefixDecrementExpr: Box<Expression> =
+{
+	"--" <a: Precedency3> => Box::new(Expression::Unary(Unop::Decrement, a))
+}
+PrefixIncrementExpr: Box<Expression> =
+{
+	"++" <a: Precedency3> => Box::new(Expression::Unary(Unop::Increment, a))
+}
 MinusExpr: Box<Expression> =
 {
-	"-" <a: Precedency3> => Box::new(Expression::Unary(Unop::Minus, a))
+	<start:@L> "-" <a: Precedency3> <end:@R> => Box::new(Expression::Unary(Unop::Minus, a))
+}
+PlusExpr: Box<Expression> =
+{
+	"+" <a: Precedency3> => Box::new(Expression::Unary(Unop::Plus, a))
 }
 NotExpr: Box<Expression> =
 {
@@ -186,6 +209,12 @@ MultExpr: Box<Expression> =
 DivExpr: Box<Expression> =
 {
 	<a: Precedency5> "/" <b: Precedency4> => Box::new(Expression::Binary(Binop::Div, a, b))
+
+}
+
+ModuloExpr: Box<Expression> =
+{
+	<a: Precedency5> "%" <b: Precedency4> => Box::new(Expression::Binary(Binop::Modulo, a, b))
 
 }
 

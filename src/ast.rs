@@ -4,8 +4,11 @@
 #[derive(Debug, PartialEq)]
 pub enum Unop
 {
+    Increment,
+    Decrement,
     Minus,
-    Not
+    Plus,
+    Not,
 }
 #[derive(Debug, PartialEq)]
 pub enum Binop
@@ -14,6 +17,7 @@ pub enum Binop
     Sub,
     Mul,
     Div,
+    Modulo,
     Less,
     Greater,
     LessEqual,
@@ -68,7 +72,10 @@ impl fmt::Display for Expression
 	    {
 		match op
 		{
+		    Unop::Decrement => write!(f, "(-- {})", *exp),
+		    Unop::Increment => write!(f, "(++ {})", *exp),
 		    Unop::Minus => write!(f, "(- {})", *exp),
+		    Unop::Plus => write!(f, "(+ {})", *exp),
 		    Unop::Not => write!(f, "(! {})", *exp),
 		}
 	    }
@@ -80,6 +87,7 @@ impl fmt::Display for Expression
 		    Binop::Sub => write!(f, "({} - {})", *exp_a, exp_b),
 		    Binop::Mul => write!(f, "({} * {})", *exp_a, exp_b),
 		    Binop::Div => write!(f, "({} / {})", *exp_a, exp_b),
+		    Binop::Modulo => write!(f, "({} % {})", *exp_a, exp_b),
 		    Binop::Less => write!(f, "({} < {})", *exp_a, exp_b),
 		    Binop::Greater => write!(f, "({} > {})", *exp_a, exp_b),
 		    Binop::LessEqual => write!(f, "({} <= {})", *exp_a, exp_b),

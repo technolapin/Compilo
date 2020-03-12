@@ -6,12 +6,20 @@ use compilo::parser;
 
 fn main()
 {
+    println!("{:?}", parser::ExprParser::new().parse("--1"));
+    println!("{:?}", parser::ExprParser::new().parse("++1"));
+    println!("{:?}", parser::ExprParser::new().parse("1--"));
+    println!("{:?}", parser::ExprParser::new().parse("1++"));
+    println!("{:?}", parser::ExprParser::new().parse("--1"));
+    println!("{:?}", parser::ExprParser::new().parse("++1"));
     println!("{:?}", parser::ExprParser::new().parse("-1"));
+    println!("{:?}", parser::ExprParser::new().parse("+1"));
     println!("{:?}", parser::ExprParser::new().parse("!1"));
     println!("{:?}", parser::ExprParser::new().parse("1+1"));
     println!("{:?}", parser::ExprParser::new().parse("1-1"));
     println!("{:?}", parser::ExprParser::new().parse("1*1"));
     println!("{:?}", parser::ExprParser::new().parse("1/1"));
+    println!("{:?}", parser::ExprParser::new().parse("1%1"));
     println!("{:?}", parser::ExprParser::new().parse("1<1"));
     println!("{:?}", parser::ExprParser::new().parse("1>1"));
     println!("{:?}", parser::ExprParser::new().parse("1<=1"));
@@ -30,7 +38,7 @@ fn main()
     if true
     {
 	println!("RANDOM_TEST");
-	let rand_expr = *Expression::random(10);
+	let rand_expr = *Expression::random(3);
 	println!("{}\n", rand_expr);
 	let pretty_printed = format!("{}", rand_expr);
 	println!("{}\n", pretty_printed);
