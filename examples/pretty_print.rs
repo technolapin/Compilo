@@ -2,16 +2,40 @@ extern crate compilo;
 
 use compilo::ast::*;
 
-use compilo::expressions;
+use compilo::parser;
 
 fn main()
 {
-    let e = Expression::Unary(Unop::Minus, Box::new(Expression::Binary(Binop::Mul, Box::new(Expression::Terminal(Terminal::Int(8))), Box::new(Expression::Terminal(Terminal::Int(3))))));
-    e.pretty_print();
-    println!("{:?}", expressions::ExprParser::new().parse("if (64+57)-12*8 {71/33} else {666}"));
-    println!("{:?}", expressions::ExprParser::new().parse("(1+1)"));
-    println!("{:?}", expressions::ExprParser::new().parse("1-1"));
-    println!("{:?}", expressions::ExprParser::new().parse("1*1"));
-    println!("{:?}", expressions::ExprParser::new().parse("1/1"));
+    println!("{:?}", parser::ExprParser::new().parse("-1"));
+    println!("{:?}", parser::ExprParser::new().parse("!1"));
+    println!("{:?}", parser::ExprParser::new().parse("1+1"));
+    println!("{:?}", parser::ExprParser::new().parse("1-1"));
+    println!("{:?}", parser::ExprParser::new().parse("1*1"));
+    println!("{:?}", parser::ExprParser::new().parse("1/1"));
+    println!("{:?}", parser::ExprParser::new().parse("1<1"));
+    println!("{:?}", parser::ExprParser::new().parse("1>1"));
+    println!("{:?}", parser::ExprParser::new().parse("1<=1"));
+    println!("{:?}", parser::ExprParser::new().parse("1>=1"));
+    println!("{:?}", parser::ExprParser::new().parse("1==1"));
+    println!("{:?}", parser::ExprParser::new().parse("1!=1"));
+    println!("{:?}", parser::ExprParser::new().parse("1&1"));
+    println!("{:?}", parser::ExprParser::new().parse("1^1"));
+    println!("{:?}", parser::ExprParser::new().parse("1|1"));
+    println!("{:?}", parser::ExprParser::new().parse("1&&1"));
+    println!("{:?}", parser::ExprParser::new().parse("1||1"));
 
+    println!("{:?}", parser::ExprParser::new().parse("if 1 {1} else {1}"));
+
+
+    if true
+    {
+	println!("RANDOM_TEST");
+	let rand_expr = *Expression::random(10);
+	println!("{}\n", rand_expr);
+	let pretty_printed = format!("{}", rand_expr);
+	println!("{}\n", pretty_printed);
+	let parsed = *parser::ExprParser::new().parse(pretty_printed.as_str()).unwrap();
+	println!("{}\n", parsed);
+	println!("MATCH = {}", rand_expr == parsed)
+    }
 }

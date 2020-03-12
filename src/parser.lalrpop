@@ -1,0 +1,269 @@
+use std::str::FromStr;
+use crate::ast::*;
+
+grammar;
+
+
+pub Expr: Box<Expression> =
+{
+	Precedency17	
+}
+
+/////////////////////
+// Values ///////////
+
+Int: i32 = <s:r"-?[0-9]+"> => i32::from_str(s).unwrap();
+
+
+////////////////////////////////////
+// Precedencies of operators ///////
+// cf https://fr.cppreference.com/w/cpp/language/operator_precedence
+// ready to implement *everything*
+
+Precedency0: Box<Expression> =
+{
+	TerminalExpr,
+	ParenthesisExpr
+}
+
+Precedency1: Box<Expression> =
+{
+	Precedency0
+}
+
+Precedency2: Box<Expression> =
+{
+	Precedency1
+
+}
+
+// moins unaire, not
+Precedency3: Box<Expression> =
+{
+	Precedency2,
+	MinusExpr,
+	NotExpr,
+}
+
+Precedency4: Box<Expression> =
+{
+	Precedency3
+
+}
+
+// mult div modulo
+Precedency5: Box<Expression> =
+{
+	Precedency4,
+	MultExpr,
+	DivExpr,
+
+}
+
+// add sub
+Precedency6: Box<Expression> =
+{
+	Precedency5,
+	AddExpr,
+	SubExpr,
+}
+
+Precedency7: Box<Expression> =
+{
+	Precedency6
+
+}
+
+// DONE
+Precedency8: Box<Expression> =
+{
+	Precedency7,
+	LessExpr,
+	GreaterExpr,
+	LessEqualExpr,
+	GreaterEqualExpr
+
+}
+
+Precedency9: Box<Expression> =
+{
+	Precedency8,
+	EqualExpr,
+	NotEqualExpr,
+
+}
+
+Precedency10: Box<Expression> =
+{
+	Precedency9,
+	BitAndExpr,
+}
+
+Precedency11: Box<Expression> =
+{
+	Precedency10,
+	XorExpr
+
+}
+
+Precedency12: Box<Expression> =
+{
+	Precedency11,
+	BitOrExpr,
+
+}
+
+Precedency13: Box<Expression> =
+{
+	Precedency12,
+	AndExpr
+
+}
+
+Precedency14: Box<Expression> =
+{
+	Precedency13,
+	OrExpr,
+}
+
+// I put If there for now, not in the list
+Precedency15: Box<Expression> =
+{
+	Precedency14,
+	IfExpr
+	
+}
+
+Precedency16: Box<Expression> =
+{
+	Precedency15
+
+}
+
+Precedency17: Box<Expression> =
+{
+	Precedency16
+
+}
+
+//////////////////////////////
+// Operators
+
+
+// 0
+TerminalExpr: Box<Expression> =
+{
+	Int => Box::new(Expression::Terminal(Terminal::Int(<>)))
+}
+
+ParenthesisExpr: Box<Expression> =
+{
+	"(" <e: Expr> ")" => e
+}
+
+
+// 1
+// 2
+// 3
+MinusExpr: Box<Expression> =
+{
+	"-" <a: Precedency3> => Box::new(Expression::Unary(Unop::Minus, a))
+}
+NotExpr: Box<Expression> =
+{
+	"!" <a: Precedency3> => Box::new(Expression::Unary(Unop::Not, a))
+}
+
+// 4
+
+// 5
+MultExpr: Box<Expression> =
+{
+	<a: Precedency5> "*" <b: Precedency4> => Box::new(Expression::Binary(Binop::Mul, a, b))
+
+}
+
+DivExpr: Box<Expression> =
+{
+	<a: Precedency5> "/" <b: Precedency4> => Box::new(Expression::Binary(Binop::Div, a, b))
+
+}
+
+// 6
+AddExpr: Box<Expression> =
+{
+	<a: Precedency6> "+" <b: Precedency5> => Box::new(Expression::Binary(Binop::Add, a, b))
+}
+
+SubExpr: Box<Expression> =
+{
+	<a: Precedency6> "-" <b: Precedency5> => Box::new(Expression::Binary(Binop::Sub, a, b))
+
+}
+
+//8
+LessExpr: Box<Expression> =
+{
+	<a: Precedency8> "<" <b: Precedency7> => Box::new(Expression::Binary(Binop::Less, a, b))
+}
+GreaterExpr: Box<Expression> =
+{
+	<a: Precedency8> ">" <b: Precedency7> => Box::new(Expression::Binary(Binop::Greater, a, b))
+}
+LessEqualExpr: Box<Expression> =
+{
+	<a: Precedency8> "<=" <b: Precedency7> => Box::new(Expression::Binary(Binop::LessEqual, a, b))
+}
+GreaterEqualExpr: Box<Expression> =
+{
+	<a: Precedency8> ">=" <b: Precedency7> => Box::new(Expression::Binary(Binop::GreaterEqual, a, b))
+}
+
+// 9
+EqualExpr: Box<Expression> =
+{
+	<a: Precedency9> "==" <b: Precedency8> => Box::new(Expression::Binary(Binop::Equal, a, b))
+}
+NotEqualExpr: Box<Expression> =
+{
+	<a: Precedency9> "!=" <b: Precedency8> => Box::new(Expression::Binary(Binop::NotEqual, a, b))
+}
+
+// 10
+BitAndExpr: Box<Expression> =
+{
+	<a: Precedency10> "&" <b: Precedency9> => Box::new(Expression::Binary(Binop::BitAnd, a, b))
+}
+// 11
+XorExpr: Box<Expression> =
+{
+	<a: Precedency11> "^" <b: Precedency10> => Box::new(Expression::Binary(Binop::Xor, a, b))
+}
+// 12
+BitOrExpr: Box<Expression> =
+{
+	<a: Precedency12> "|" <b: Precedency11> => Box::new(Expression::Binary(Binop::BitOr, a, b))
+}
+
+// 13
+AndExpr: Box<Expression> =
+{
+	<a: Precedency13> "&&" <b: Precedency12> => Box::new(Expression::Binary(Binop::And, a, b))
+}
+
+// 14
+OrExpr: Box<Expression> =
+{
+	<a: Precedency14> "||" <b: Precedency13> => Box::new(Expression::Binary(Binop::Or, a, b))
+}
+
+
+// 15
+IfExpr: Box<Expression> =
+{
+	"if" <cond: Precedency15> "{" <e1: Expr> "}" "else" "{" <e2: Expr> "}" =>
+  	     Box::new(Expression::Ternary(Ternop::If, cond, e1, e2)),
+
+}
+
+
