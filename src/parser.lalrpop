@@ -4,10 +4,98 @@ use crate::ast::*;
 grammar;
 
 
+/////////////////////////
+/////////////////////////
+//// Statements /////////
+
+pub Stat: Statement =
+{
+	Expr => Statement::Expr(*<>),
+	PrimitiveSt,
+	//StatBlock
+}
+
+
+/////////////////////////
+// Primitives ///////////
+
+PrimitiveSt: Statement =
+{
+	<prim: PrimitiveToken> "(" <e: Expr> ")" => Statement::Prim(prim, *e)
+}
+
+/////////////////////////
+// PrimitivesTokens /////
+
+PrimitiveToken: Primitive =
+{
+	"print" => Primitive::Print,
+}
+
+/////////////////////////
+// StatBlock
+
+StatBlock: Statement =
+{
+	"{" <v: StatList> "}" => Statement::StatBlock(v)
+}
+
+StatList: Vec<Statement> =
+{
+	Stat => vec![<>],
+	<v: StatList> <st: Stat> => {let mut vmut = v; vmut.push(st); vmut},
+}
+
+/////////////////////////
+// Expressions //////////
+
 pub Expr: Box<Expression> =
 {
 	Precedency17	
 }
+
+/////////////////////
+// Identifiers //////
+
+
+Identif =
+{
+	"_main",
+	r#"(?:\nil)[[:alpha:]][[:word:]]*"#
+}
+
+/////////////////////
+// Types ////////////
+
+//Type: 
+
+
+
+
+/////////////////////
+// Declarations /////
+
+Decls: Declaration =
+{
+	TypeDecl,
+	ClassDecl,
+	VarDecl,
+	FunDecl,
+	PrimDecl,
+	MethDecl,
+	ImportDecl
+}
+
+TypeDecl: Declaration =
+{
+//	"type" Identifier '=' Type
+}
+ClassDecl: Declaration = {}
+VarDecl: Declaration = {}
+FunDecl: Declaration = {}
+PrimDecl: Declaration = {}
+MethDecl: Declaration = {}
+ImportDecl: Declaration = {}
 
 /////////////////////
 // Values ///////////
@@ -15,7 +103,8 @@ pub Expr: Box<Expression> =
 // only recognize positive numbers
 // negatives ones will be recognised as a positive and a unary -
 Int: u32 = <s:r"[0-9]+"> => u32::from_str(s).unwrap();
-
+Nil: () = <s:r"nil"> => ();
+String: String = <s: r#""[^"]*""#> => String::from(&s[1..s.len()-1]);
 
 ////////////////////////////////////
 // Precedencies of operators ///////
@@ -24,7 +113,7 @@ Int: u32 = <s:r"[0-9]+"> => u32::from_str(s).unwrap();
 
 Precedency0: Box<Expression> =
 {
-	TerminalExpr,
+	LiteralExpr,
 	ParenthesisExpr
 }
 
@@ -156,9 +245,11 @@ Precedency17: Box<Expression> =
 
 
 // 0
-TerminalExpr: Box<Expression> =
+LiteralExpr: Box<Expression> =
 {
-	Int => Box::new(Expression::Terminal(Terminal::Int(<>)))
+	Int => Box::new(Expression::Terminal(Terminal::Int(<>))),
+	Nil => Box::new(Expression::Terminal(Terminal::Nil)),
+	String => Box::new(Expression::Terminal(Terminal::String(<>)))
 }
 
 ParenthesisExpr: Box<Expression> =
@@ -292,7 +383,7 @@ OrExpr: Box<Expression> =
 // 15
 IfExpr: Box<Expression> =
 {
-	"if" <cond: Precedency15> "{" <e1: Expr> "}" "else" "{" <e2: Expr> "}" =>
+	"if" <cond: Precedency15> "then" <e1: Expr> "else" <e2: Expr> "end" =>
   	     Box::new(Expression::Ternary(Ternop::If, cond, e1, e2)),
 
 }

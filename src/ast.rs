@@ -28,8 +28,9 @@ pub enum Binop
     Xor,
     BitOr,
     And,
-    Or
-    
+    Or,
+
+	
 }
 
 #[derive(Debug, PartialEq)]
@@ -43,10 +44,8 @@ pub enum Ternop
 pub enum Terminal
 {
     Int(u32),
-    Float(f32),
-    Bool(bool),
-    Char(char),
-    String(String)
+    String(String),
+    Nil
 }
 
 #[derive(Debug, PartialEq)]
@@ -55,7 +54,8 @@ pub enum Expression
     Terminal(Terminal),
     Unary(Unop, Box<Expression>),
     Binary(Binop, Box<Expression>, Box<Expression>),
-    Ternary(Ternop, Box<Expression>, Box<Expression>, Box<Expression>)
+    Ternary(Ternop, Box<Expression>, Box<Expression>, Box<Expression>),
+    
 }
 
 
@@ -106,7 +106,7 @@ impl fmt::Display for Expression
 	    {
 		match op
 		{
-		    Ternop::If => write!(f, "(if {} {{{}}} else {{{}}})",
+		    Ternop::If => write!(f, "(if {} then {} else {} end)",
 					 *exp_a, *exp_b, *exp_c)
 		}
 	    },
@@ -115,10 +115,8 @@ impl fmt::Display for Expression
 		match term
 		{
 		    Terminal::Int(x) => write!(f, "{}", x),
-		    Terminal::Float(x) => write!(f, "{}", x),
-		    Terminal::Bool(x) => write!(f, "{}", x),
-		    Terminal::Char(x) => write!(f, "{}", x),
-		    Terminal::String(x) => write!(f, "{}", x),
+		    Terminal::String(x) => write!(f, r#""{}""#, x),
+		    Terminal::Nil => write!(f, "nil"),		    
 		}
 	    }
 	    
@@ -171,11 +169,25 @@ impl Ternop
 	Self::If
     }
 }
+
 impl Terminal
 {
     fn random() -> Self
     {
-	Terminal::Int(rand::random::<u32>())
+	use rand::{thread_rng, Rng};
+	use rand::distributions::Alphanumeric;
+	match rand::random::<u32>() % 3
+	{
+	    0 => Terminal::Int(rand::random::<u32>()),
+	    1 => {
+		Terminal::String(thread_rng()
+				 .sample_iter(&Alphanumeric)
+				 .take(30)
+				 .collect())
+	    },
+	    2 => Terminal::Nil,
+	    _ => unreachable!()
+	}
     }
 }
 
@@ -206,5 +218,82 @@ impl Expression
 		}
 	    }
 	)
+    }
+}
+
+/*
+enum Program
+{
+    Exp(Expression),
+    Decl(Declaration)
+}
+*/
+
+
+pub enum Declaration
+{
+    Type,
+    Class,
+    Var,
+    Fun,
+    Prim,
+    Meth,
+    Import    
+}
+
+
+
+
+pub struct Identifier;
+
+#[derive(Debug, PartialEq)]
+pub enum Statement
+{
+    Expr(Expression),
+    Prim(Primitive, Expression),
+    StatBlock(Vec<Statement>)
+}
+
+impl fmt::Display for Statement
+{
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result
+    {
+	match self
+	{
+	    Self::Expr(e) => write!(f, "{}", e),
+	    Self::Prim(prim, e) => write!(f, "{}({})", prim, e),
+	    Self::StatBlock(exp_vec) =>
+	    {
+		let listed =
+		    exp_vec.iter().fold(String::new(), |s, stat|
+			     {
+				 let mut smut = s;
+				 smut.push_str(format!("{}", stat).as_str());
+				 smut
+			     }
+		);
+		write!(f, "{{\n{}\n}}", listed)
+	    },
+	}
+    }
+}
+
+
+
+
+#[derive(Debug, PartialEq)]
+pub enum Primitive
+{
+    Print
+}
+
+impl fmt::Display for Primitive
+{
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result
+    {
+	match self
+	{
+	    Self::Print => write!(f, "print")
+	}
     }
 }
