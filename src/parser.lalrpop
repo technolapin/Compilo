@@ -8,11 +8,13 @@ grammar;
 /////////////////////////
 //// Statements /////////
 
+StatDelimiter = ";";
+
 pub Stat: Statement =
 {
-	Expr => Statement::Expr(*<>),
+	<e: Expr> StatDelimiter => Statement::Expr(*e),
 	PrimitiveSt,
-	//StatBlock
+	StatBlock,
 }
 
 
@@ -46,12 +48,24 @@ StatList: Vec<Statement> =
 	<v: StatList> <st: Stat> => {let mut vmut = v; vmut.push(st); vmut},
 }
 
+Seq: (Vec<Statement>, Box<Expression>) =
+{
+	<s: StatList> <e: Expr> => (s, e)
+}
+
+SeqBlock: Box<Expression> =
+{
+	"{" <seq: Seq> "}" => Box::new(Expression::Seq(seq.0, seq.1))
+}
+
+
 /////////////////////////
 // Expressions //////////
 
 pub Expr: Box<Expression> =
 {
-	Precedency17	
+	SeqBlock,
+	Precedency17,
 }
 
 /////////////////////

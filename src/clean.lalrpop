@@ -1,0 +1,21 @@
+use std::str::FromStr;
+
+grammar;
+
+
+pub CleanCode: String =
+{
+	Commented	
+}
+
+
+Commented: String =
+{
+	r#"(/\*).*(\*/)"# => String::new()
+}
+
+// non (a et b) => non a ou non b
+NonCommented: String =
+{
+//	r#"(?:(/\*).*(\*/)).*"# => String::from(<>)
+}

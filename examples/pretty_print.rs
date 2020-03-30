@@ -18,36 +18,43 @@ fn oof(s: &str)
 
 fn main()
 {
-    oof("--1");
-    oof("++1");
-    oof("1--");
-    oof("1++");
-    oof("--1");
-    oof("++1");
-    oof("-1");
-    oof("+1");
-    oof("!1");
-    oof("1+1");
-    oof("1-1");
-    oof("1*1");
-    oof("1/1");
-    oof("1%1");
-    oof("1<1");
-    oof("1>1");
-    oof("1<=1");
-    oof("1>=1");
-    oof("1==1");
-    oof("1!=1");
-    oof("1&1");
-    oof("1^1");
-    oof("1|1");
-    oof("1&&1");
-    oof("1||1");
+    foo("--1");
+    foo("++1");
+    foo("1--");
+    foo("1++");
+    foo("--1");
+    foo("++1");
+    foo("-1");
+    foo("+1");
+    foo("!1");
+    foo("1+1");
+    foo("1-1");
+    foo("1*1");
+    foo("1/1");
+    foo("1%1");
+    foo("1<1");
+    foo("1>1");
+    foo("1<=1");
+    foo("1>=1");
+    foo("1==1");
+    foo("1!=1");
+    foo("1&1");
+    foo("1^1");
+    foo("1|1");
+    foo("1&&1");
+    foo("1||1");
 
-    oof("if 1 then 1 else 1 end");
+    foo("if 1 then 1 else 1 end");
 
-    oof("print(\"lol\")");
-    
+    oof(r#"print("lol")"#);
+    oof(r#"{
+print("lol")
+print("not lol")
+1;
+2
+};
+"#);
+
     println!();
 
 //    let src = r#"(if "zvqeCWbFy026Vbx2V7nKx6GiSEeS7q" then "j1DGS7NFH5Xw7YBFmJEzsQOQIMd7jb" else nil end)"#;
@@ -55,7 +62,7 @@ fn main()
 
     //println!("\n{:?}", parsed);
     
-    if true
+    if false
     {
 	println!("RANDOM_TEST");
 	let rand_expr = *Expression::random(4);

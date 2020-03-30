@@ -55,7 +55,7 @@ pub enum Expression
     Unary(Unop, Box<Expression>),
     Binary(Binop, Box<Expression>, Box<Expression>),
     Ternary(Ternop, Box<Expression>, Box<Expression>, Box<Expression>),
-    
+    Seq(Vec<Statement>, Box<Expression>)
 }
 
 
@@ -118,6 +118,11 @@ impl fmt::Display for Expression
 		    Terminal::String(x) => write!(f, r#""{}""#, x),
 		    Terminal::Nil => write!(f, "nil"),		    
 		}
+	    },
+	    Expression::Seq(statements, expression) =>
+	    {
+		let mut s: String = statements.iter().fold(String::new(), |s, stat| format!("{}\n{}", s, stat));
+		write!(f, "{}\n{}", s, *expression)
 	    }
 	    
 	}
@@ -268,11 +273,11 @@ impl fmt::Display for Statement
 		    exp_vec.iter().fold(String::new(), |s, stat|
 			     {
 				 let mut smut = s;
-				 smut.push_str(format!("{}", stat).as_str());
+				 smut.push_str(format!("{}\n", stat).as_str());
 				 smut
 			     }
 		);
-		write!(f, "{{\n{}\n}}", listed)
+		write!(f, "{{\n{}}}", listed)
 	    },
 	}
     }
