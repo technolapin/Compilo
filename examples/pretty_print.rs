@@ -7,54 +7,74 @@ use compilo::parser;
 fn foo(s: &str)
 {
     let parsed = parser::ExprParser::new().parse(s);
-    println!("{} {:?}", s, parsed);
+    println!("{} {:?}", s, &parsed);
 }
 
-fn oof(s: &str)
+
+fn seq(s: &str)
 {
-    let parsed = parser::StatParser::new().parse(s);
+    let parsed = parser::SeqParser::new().parse(s);
+    println!("{} {}", s, parsed.map(|a| format!("{}", a)).unwrap_or(String::from("#ERR")));
+}
+
+fn test_identif(s: &str)
+{
+    let parsed = parser::IdentifParser::new().parse(s);
     println!("{} {:?}", s, parsed);
 }
 
 fn main()
 {
-    foo("--1");
-    foo("++1");
-    foo("1--");
-    foo("1++");
-    foo("--1");
-    foo("++1");
-    foo("-1");
-    foo("+1");
-    foo("!1");
-    foo("1+1");
-    foo("1-1");
-    foo("1*1");
-    foo("1/1");
-    foo("1%1");
-    foo("1<1");
-    foo("1>1");
-    foo("1<=1");
-    foo("1>=1");
-    foo("1==1");
-    foo("1!=1");
-    foo("1&1");
-    foo("1^1");
-    foo("1|1");
-    foo("1&&1");
-    foo("1||1");
+    seq("--1");
+    seq("++1");
+    seq("1--");
+    seq("1++");
+    seq("--1");
+    seq("++1");
+    seq("-1");
+    seq("+1");
+    seq("!1");
+    seq("1+1");
+    seq("1-1");
+    seq("1*1");
+    seq("1/1");
+    seq("1%1");
+    seq("1<1");
+    seq("1>1");
+    seq("1<=1");
+    seq("1>=1");
+    seq("1==1");
+    seq("1!=1");
+    seq("1&1");
+    seq("1^1");
+    seq("1|1");
+    seq("1&&1");
+    seq("1||1");
 
-    foo("if 1 then 1 else 1 end");
+    seq("if 1 then 1 else 1");
 
-    oof(r#"print("lol")"#);
-    oof(r#"{
-print("lol")
-print("not lol")
+    seq(r#"print("lol")"#);
+    seq(r#"{
+print("lol");
+print("not lol");
 1;
 2
 };
 "#);
 
+    seq("1 + iiiii");
+    test_identif("iiiii");
+    use regex::Regex;
+    let re = Regex::new(r#"^[[:alpha:]][[[:word:]]&&[^a]]$"#).unwrap();
+    assert!(re.is_match("ii"));
+    
+    seq(r#"
+let var i := 10
+in
+1 + i + 1
+end
+"#);
+    
     println!();
 
 //    let src = r#"(if "zvqeCWbFy026Vbx2V7nKx6GiSEeS7q" then "j1DGS7NFH5Xw7YBFmJEzsQOQIMd7jb" else nil end)"#;
@@ -74,3 +94,5 @@ print("not lol")
 	println!("MATCH = {}", rand_expr == parsed)
     }
 }
+
+ 

@@ -4,26 +4,15 @@ use crate::ast::*;
 grammar;
 
 
-/////////////////////////
-/////////////////////////
-//// Statements /////////
-
 StatDelimiter = ";";
-
-pub Stat: Statement =
-{
-	<e: Expr> StatDelimiter => Statement::Expr(*e),
-	PrimitiveSt,
-	StatBlock,
-}
-
 
 /////////////////////////
 // Primitives ///////////
 
-PrimitiveSt: Statement =
+
+PrimitiveExpr: Box<Expression> =
 {
-	<prim: PrimitiveToken> "(" <e: Expr> ")" => Statement::Prim(prim, *e)
+	<prim: PrimitiveToken> "(" <e: Expr> ")" => Box::new(Expression::Primitive(prim, e))
 }
 
 /////////////////////////
@@ -33,49 +22,65 @@ PrimitiveToken: Primitive =
 {
 	"print" => Primitive::Print,
 }
-
-/////////////////////////
-// StatBlock
-
-StatBlock: Statement =
+pub Seq: Seq =
 {
-	"{" <v: StatList> "}" => Statement::StatBlock(v)
+	SeqTerminate,
+	SeqNonTerminate
 }
 
-StatList: Vec<Statement> =
+SeqNonTerminate: Seq =
 {
-	Stat => vec![<>],
-	<v: StatList> <st: Stat> => {let mut vmut = v; vmut.push(st); vmut},
+	SimpleExpr => Seq::new(*<>),
+	<s: SeqNonTerminate> StatDelimiter <maybe_e: SimpleExpr?> =>
+	if let Some(e) = maybe_e
+	{
+		Seq::pushed(s, *e)
+	}
+	else
+	{
+		Seq::pushed(s, Expression::Terminal(Terminal::Nil))
+	}
 }
 
-Seq: (Vec<Statement>, Box<Expression>) =
+SeqTerminate: Seq =
 {
-	<s: StatList> <e: Expr> => (s, e)
+	ControlFlowExpr => Seq::new(*<>),
+	<s: SeqNonTerminate> StatDelimiter <e: ControlFlowExpr> => Seq::pushed(s, *e)
 }
 
 SeqBlock: Box<Expression> =
 {
-	"{" <seq: Seq> "}" => Box::new(Expression::Seq(seq.0, seq.1))
+	"{" <seq: Seq> "}" => Box::new(Expression::Seq(seq))
 }
 
 
 /////////////////////////
 // Expressions //////////
-
 pub Expr: Box<Expression> =
 {
-	SeqBlock,
-	Precedency17,
+	SimpleExpr,
+	ControlFlowExpr
 }
+
+SimpleExpr =
+{
+	Precedency17,
+	SeqBlock,
+};
+
+ControlFlowExpr: Box<Expression> =
+{
+	IfExpr,
+}
+
 
 /////////////////////
 // Identifiers //////
 
-
-Identif =
+pub Identif: Identifier =
 {
-	"_main",
-	r#"(?:\nil)[[:alpha:]][[:word:]]*"#
+	"_main" => Identifier::new(<>),
+	r#"[[:alpha:]][[:word:]]*"# => Identifier::new(<>),
 }
 
 /////////////////////
@@ -89,27 +94,27 @@ Identif =
 /////////////////////
 // Declarations /////
 
-Decls: Declaration =
-{
-	TypeDecl,
-	ClassDecl,
-	VarDecl,
-	FunDecl,
-	PrimDecl,
-	MethDecl,
-	ImportDecl
-}
+// Decls: Declaration =
+// {
+// 	TypeDecl,
+// 	ClassDecl,
+// 	VarDecl,
+// 	FunDecl,
+// 	PrimDecl,
+// 	MethDecl,
+// 	ImportDecl
+// }
 
-TypeDecl: Declaration =
-{
-//	"type" Identifier '=' Type
-}
-ClassDecl: Declaration = {}
-VarDecl: Declaration = {}
-FunDecl: Declaration = {}
-PrimDecl: Declaration = {}
-MethDecl: Declaration = {}
-ImportDecl: Declaration = {}
+// TypeDecl: Declaration =
+// {
+// //	"type" Identifier '=' Type
+// }
+// ClassDecl: Declaration = {}
+// VarDecl: Declaration = {}
+// FunDecl: Declaration = {}
+// PrimDecl: Declaration = {}
+// MethDecl: Declaration = {}
+// ImportDecl: Declaration = {}
 
 /////////////////////
 // Values ///////////
@@ -117,7 +122,7 @@ ImportDecl: Declaration = {}
 // only recognize positive numbers
 // negatives ones will be recognised as a positive and a unary -
 Int: u32 = <s:r"[0-9]+"> => u32::from_str(s).unwrap();
-Nil: () = <s:r"nil"> => ();
+Nil: () = <s:r"()"> => ();
 String: String = <s: r#""[^"]*""#> => String::from(&s[1..s.len()-1]);
 
 ////////////////////////////////////
@@ -128,7 +133,9 @@ String: String = <s: r#""[^"]*""#> => String::from(&s[1..s.len()-1]);
 Precedency0: Box<Expression> =
 {
 	LiteralExpr,
-	ParenthesisExpr
+	IdentifierExpr,
+	ParenthesisExpr,
+	PrimitiveExpr
 }
 
 Precedency1: Box<Expression> =
@@ -238,7 +245,7 @@ Precedency14: Box<Expression> =
 Precedency15: Box<Expression> =
 {
 	Precedency14,
-	IfExpr
+	LetInExpr,
 	
 }
 
@@ -251,8 +258,10 @@ Precedency16: Box<Expression> =
 Precedency17: Box<Expression> =
 {
 	Precedency16
-
 }
+
+
+
 
 //////////////////////////////
 // Operators
@@ -263,8 +272,14 @@ LiteralExpr: Box<Expression> =
 {
 	Int => Box::new(Expression::Terminal(Terminal::Int(<>))),
 	Nil => Box::new(Expression::Terminal(Terminal::Nil)),
-	String => Box::new(Expression::Terminal(Terminal::String(<>)))
+	String => Box::new(Expression::Terminal(Terminal::String(<>))),
 }
+
+IdentifierExpr: Box<Expression> =
+{
+	Identif => Box::new(Expression::Identifier(<>))
+}
+
 
 ParenthesisExpr: Box<Expression> =
 {
@@ -395,11 +410,29 @@ OrExpr: Box<Expression> =
 
 
 // 15
-IfExpr: Box<Expression> =
+pub IfExpr: Box<Expression> =
 {
-	"if" <cond: Precedency15> "then" <e1: Expr> "else" <e2: Expr> "end" =>
-  	     Box::new(Expression::Ternary(Ternop::If, cond, e1, e2)),
+	"if" <cond: Precedency15> "then" <seq1: Seq> "else" <seq2: Seq> =>
+  	     Box::new(Expression::If(cond, seq1, seq2)),
 
+}
+LetInExpr: Box<Expression> =
+{
+	"let" <vars: DeclList> "in" <e: Seq> "end" =>
+  	     Box::new(Expression::LetIn(vars, e)),
+
+}
+
+Decl: (Identifier, Expression) =
+{
+	"var" <ident: Identif> ":=" <e: Expr> => (ident, *e)
+}
+
+DeclList: VarsRegister =
+{
+	<tuple: Decl> => VarsRegister::with_first(tuple.0, tuple.1),
+	<register: DeclList> <tuple: Decl> => register.with_added(tuple.0, tuple.1),
+	
 }
 
 
