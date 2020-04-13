@@ -1,4 +1,4 @@
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum Unop
 {
     Increment,
@@ -7,7 +7,7 @@ pub enum Unop
     Plus,
     Not,
 }
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum Binop
 {
     Add,
@@ -26,12 +26,6 @@ pub enum Binop
     BitOr,
     And,
     Or,
-}
-
-#[derive(Debug, PartialEq)]
-pub enum Ternop
-{
-    If
 }
 
 
@@ -71,12 +65,5 @@ impl Binop
 	    i => {println!("BIN UNREACH {}", i); unreachable!()}
 	    
 	}
-    }
-}
-impl Ternop
-{
-    pub fn random() -> Self
-    {
-	Self::If
     }
 }

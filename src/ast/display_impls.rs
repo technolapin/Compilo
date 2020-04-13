@@ -7,7 +7,7 @@ impl fmt::Display for Seq
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result
     {
 	let n = self.0.len();
-	self.0.get(0..(n-1)).map(
+	self.0.get(0..(n.max(1)-1)).map(
 	    |elements|
 	    elements.iter().for_each(
 	    |expr| {write!(f, "{};\n", *expr);}
@@ -18,7 +18,7 @@ impl fmt::Display for Seq
 	}
 	else
 	{
-	    Err(std::fmt::Error)
+	    write!(f, "")
 	}
     }
 }
@@ -65,7 +65,7 @@ impl fmt::Display for Expression
 	    
 	    Expression::If(cond, seq_a, seq_b) =>
 	    {
-		write!(f, "if {} then {} else {}", *cond, seq_a, seq_b)
+		write!(f, "(if {} then {} else {})", *cond, seq_a, seq_b)
 	    },
 	    Expression::Terminal(term) =>
 	    {
@@ -73,16 +73,16 @@ impl fmt::Display for Expression
 		{
 		    Terminal::Int(x) => write!(f, "{}", x),
 		    Terminal::String(x) => write!(f, r#""{}""#, x),
-		    Terminal::Nil => write!(f, "nil"),		    
+		    Terminal::Nil => write!(f, "()"),		    
 		}
 	    },
-	    Expression::Seq(seq) =>
+	    Expression::Block(seq) =>
 	    {
 		write!(f, "{{ {} }}", seq)
 	    },
 	    Expression::LetIn(var_register, boxed_expr) =>
 	    {
-		write!(f, "let {} in {} end", var_register, boxed_expr)
+		write!(f, "(let {} in {} end)", var_register, boxed_expr)
 	    }
 	    Expression::Identifier(identifier) =>
 	    {
@@ -118,7 +118,7 @@ impl fmt::Display for VarsRegister
 	let s = self.0.iter()
 	    .fold(String::new(), |s, (identifier, expr)|
 		  {
-		      format!("var {} := {}\n", identifier, expr)
+		      format!("{} var {} := {}\n", s, identifier, expr)
 		  });
 	write!(f, "{}", s)
     }

@@ -61,6 +61,7 @@ print("not lol");
 2
 };
 "#);
+    seq("if {1} then 2 else 3");
 
     seq("1 + iiiii");
     test_identif("iiiii");
@@ -82,7 +83,7 @@ end
 
     //println!("\n{:?}", parsed);
     
-    if false
+    if true
     {
 	println!("RANDOM_TEST");
 	let rand_expr = *Expression::random(4);
@@ -91,7 +92,14 @@ end
 	println!("{}\n", pretty_printed);
 	let parsed = *parser::ExprParser::new().parse(pretty_printed.as_str()).unwrap();
 	println!("{}\n", parsed);
-	println!("MATCH = {}", rand_expr == parsed)
+	let same = rand_expr == parsed;
+	println!("MATCH = {}", same);
+	if !same
+	{
+	    println!("ORIGINAL:\n {:?}", rand_expr);
+	    println!("PARSED  :\nq {:?}", parsed);
+	    
+	}
     }
 }
 

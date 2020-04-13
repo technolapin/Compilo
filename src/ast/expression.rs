@@ -1,7 +1,7 @@
-use super::{Unop, Binop, Ternop, Terminal, VarsRegister, Identifier, Primitive};
+use super::{Unop, Binop, Terminal, VarsRegister, Identifier, Primitive};
 
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct Seq(pub Vec<Expression>);
 
 impl Seq
@@ -17,20 +17,33 @@ impl Seq
 	v.push(expr);
 	Self(v)
     }
+
+    fn random(depth: u32) -> Self
+    {
+	if depth == 0
+	{
+	    Self(vec![*Expression::random(0)])
+	}
+	else
+	{
+	    let r = rand::random::<u32>() % 4+1;
+	    (0..r).fold(Self(vec![]), |seq, _| seq.pushed(*Expression::random(depth-1)))
+	}
+    }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum Expression
 {
     Terminal(Terminal),
     Identifier(Identifier),
 
+
     Unary(Unop, Box<Expression>),
     Binary(Binop, Box<Expression>, Box<Expression>),
-//    Ternary(Ternop, Box<Expression>, Box<Expression>, Box<Expression>),
 
     If(Box<Expression>, Seq, Seq),
-    Seq(Seq),
+    Block(Seq),
     LetIn(VarsRegister, Seq),
     Primitive(Primitive, Box<Expression>),
 }
@@ -52,14 +65,18 @@ impl Expression
 	    }
 	    else
 	    {
-		match rand::random::<u32>() % 3
+		match rand::random::<u32>() % 6
 		{
 		    0 => Self::Unary(Unop::random(), Self::random(depth-1)),
 		    1 => Self::Binary(Binop::random(), Self::random(depth-1), Self::random(depth-1)),
-//		    2 => Self::Ternary(Ternop::random(), Self::random(depth-1), Self::random(depth-1), Self::random(depth-1)),
+		    2 => Self::If(Self::random(depth-1), Seq::random(depth-1), Seq::random(depth-1)),
+		    3 => Self::Block(Seq::random(depth-1)),
+		    4 => Self::LetIn(VarsRegister::random(depth-1), Seq::random(depth-1)),
+		    5 => Self::Primitive(Primitive::random(), Self::random(depth-1)),
 		    _ => {println!("EXPR UNREACH"); unreachable!()}
 		}
 	    }
 	)
     }
 }
+

@@ -25,7 +25,7 @@ pub enum Declaration
 
 
 */
-#[derive(Debug, PartialEq, Hash, Eq)]
+#[derive(Debug, PartialEq, Hash, Eq, Clone)]
 pub struct Identifier(String);
 
 impl Identifier
@@ -34,10 +34,23 @@ impl Identifier
     {
 	Self(String::from(name))
     }
+
+    pub fn random() -> Self
+    {
+	use rand::{thread_rng, Rng};
+	use rand::distributions::Alphanumeric;
+	let mut s = String::from("a");
+	let s2: String = thread_rng()
+	    .sample_iter(&Alphanumeric)
+	    .take(8)
+	    .collect();
+	s.push_str(s2.as_str());
+	Self(s)
+    }
 }
 
 use std::collections::HashMap;
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct VarsRegister(HashMap<Identifier, Expression>);
 impl VarsRegister
 {
@@ -55,12 +68,28 @@ impl VarsRegister
 	hashmap.insert(key, val);
 	Self(hashmap)
     }
+    pub fn random(depth: u32) -> Self
+    {
+	(0..(rand::random::<u32>()%6+1))
+	    .fold(Self::new(),
+		  |reg, _|
+		  reg.with_added(Identifier::random(), *Expression::random(depth.max(1)-1)
+		  )
+	    )
+    }
 }
 
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum Primitive
 {
     Print
 }
 
+impl Primitive
+{
+    fn random() -> Self
+    {
+	Self::Print
+    }
+}

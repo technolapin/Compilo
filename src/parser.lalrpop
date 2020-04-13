@@ -50,7 +50,8 @@ SeqTerminate: Seq =
 
 SeqBlock: Box<Expression> =
 {
-	"{" <seq: Seq> "}" => Box::new(Expression::Seq(seq))
+	"{" <seq: Seq> "}" => Box::new(Expression::Block(seq)),
+	"{" "}" => Box::new(Expression::Block(Seq::new(Expression::Terminal(Terminal::Nil))))
 }
 
 
@@ -65,7 +66,6 @@ pub Expr: Box<Expression> =
 SimpleExpr =
 {
 	Precedency17,
-	SeqBlock,
 };
 
 ControlFlowExpr: Box<Expression> =
@@ -122,7 +122,7 @@ pub Identif: Identifier =
 // only recognize positive numbers
 // negatives ones will be recognised as a positive and a unary -
 Int: u32 = <s:r"[0-9]+"> => u32::from_str(s).unwrap();
-Nil: () = <s:r"()"> => ();
+Nil: () = "()" => ();
 String: String = <s: r#""[^"]*""#> => String::from(&s[1..s.len()-1]);
 
 ////////////////////////////////////
@@ -135,7 +135,8 @@ Precedency0: Box<Expression> =
 	LiteralExpr,
 	IdentifierExpr,
 	ParenthesisExpr,
-	PrimitiveExpr
+	PrimitiveExpr,
+	SeqBlock,
 }
 
 Precedency1: Box<Expression> =
@@ -412,7 +413,7 @@ OrExpr: Box<Expression> =
 // 15
 pub IfExpr: Box<Expression> =
 {
-	"if" <cond: Precedency15> "then" <seq1: Seq> "else" <seq2: Seq> =>
+	"if" <cond: Expr> "then" <seq1: Seq> "else" <seq2: Seq> =>
   	     Box::new(Expression::If(cond, seq1, seq2)),
 
 }
