@@ -17,6 +17,21 @@ fn seq(s: &str)
     println!("{} {}", s, parsed.map(|a| format!("{}", a)).unwrap_or(String::from("#ERR")));
 }
 
+fn type_inference(s: &str)
+{
+    let parsed = parser::SeqParser::new().parse(s);
+    if let Ok(seq) = parsed
+    {
+	println!("{:?}", seq);
+	println!("INFERED TYPE: {:?}", seq.infer_type());
+    }
+    else
+    {
+	println!("failed parsing")
+    }
+}
+
+
 fn test_identif(s: &str)
 {
     let parsed = parser::IdentifParser::new().parse(s);
@@ -78,15 +93,12 @@ end
     
     println!();
 
-//    let src = r#"(if "zvqeCWbFy026Vbx2V7nKx6GiSEeS7q" then "j1DGS7NFH5Xw7YBFmJEzsQOQIMd7jb" else nil end)"#;
-    //let parsed = *parser::ExprParser::new().parse(src).unwrap();
 
-    //println!("\n{:?}", parsed);
     
     if true
     {
 	println!("RANDOM_TEST");
-	let rand_expr = *Expression::random(4);
+	let rand_expr = *Expression::random(3);
 	println!("{}\n", rand_expr);
 	let pretty_printed = format!("{}", rand_expr);
 	println!("{}\n", pretty_printed);
@@ -100,6 +112,8 @@ end
 	    println!("PARSED  :\nq {:?}", parsed);
 	    
 	}
+	println!();
+	type_inference(pretty_printed.as_str());
     }
 }
 

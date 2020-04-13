@@ -1,3 +1,5 @@
+use super::Type;
+
 #[derive(Debug, PartialEq, Clone)]
 pub enum Terminal
 {
@@ -5,7 +7,6 @@ pub enum Terminal
     String(String),
     Nil,
 }
-
 
 
 
@@ -29,6 +30,15 @@ impl Terminal
 	    2 => Terminal::Nil,
 	    _ => unreachable!()
 	}
+    }
+    pub fn infer_type(&self) -> Result<Type, String>
+    {
+	Ok(match self
+	{
+	    Self::Nil => Type::Nil,
+	    Self::Int(_) => Type::Int,
+	    Self::String(_) => Type::String,
+	})
     }
 }
 

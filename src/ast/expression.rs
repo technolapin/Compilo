@@ -30,6 +30,19 @@ impl Seq
 	    (0..r).fold(Self(vec![]), |seq, _| seq.pushed(*Expression::random(depth-1)))
 	}
     }
+
+    pub fn infer_type(&self) -> Result<Type, String>
+    {
+	self.0.last().expect("EMPTY SEQ NOT SUPPORTED").infer_type()
+    }
+}
+#[derive(PartialEq, Debug, Clone)]
+pub enum Type
+{
+    Nil,
+    Int,
+    String,
+    Unknown // used durring type inference
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -78,5 +91,63 @@ impl Expression
 	    }
 	)
     }
+    
+    pub fn infer_type(&self) -> Result<Type, String>
+    {
+	match self
+	{
+	    Self::Terminal(ter) => ter.infer_type(),
+	    Self::Identifier(id) => Ok(Type::Unknown),
+	    Self::Unary(unop, exp) => (*exp).infer_type(),
+	    Self::Binary(binop, a, b) =>
+	    {
+		let t_a = (*a).infer_type()?;
+		let t_b = (*b).infer_type()?;
+		if t_a == t_b
+		{
+		    Ok(t_a)
+		}
+		else if t_a == Type::Unknown
+		{
+		    Ok(t_b)
+		}
+		else if t_b == Type::Unknown
+		{
+		    Ok(t_a)
+		}
+		else
+		{
+		    Err(format!("{:?} cannot be applied to {:?} and {:?}", binop, t_a, t_b))
+		}
+	    },
+	    Self::If(cond, sa, sb) =>
+	    {
+		let t_a = sa.infer_type()?;
+		let t_b = sb.infer_type()?;
+		if t_a == t_b
+		{
+		    Ok(t_a)
+		}
+		else if t_a == Type::Unknown
+		{
+		    Ok(t_b)
+		}
+		else if t_b == Type::Unknown
+		{
+		    Ok(t_a)
+		}
+		else
+		{
+		    Err(format!("if types differ: {:?} {:?}", t_a, t_b))
+		}
+		
+	    },
+	    Self::Block(seq) => seq.infer_type(),
+	    Self::LetIn(reg, seq) => seq.infer_type(),
+	    Self::Primitive(_, _) => Ok(Type::Nil),
+	    
+	}
+    }
+    
 }
 
