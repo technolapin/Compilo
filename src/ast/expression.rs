@@ -1,5 +1,6 @@
 use super::{Unop, Binop, Terminal, VarsRegister, Identifier, Primitive};
 
+use std::sync::Arc;
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct Seq(pub Vec<Expression>);
@@ -35,6 +36,22 @@ impl Seq
     {
 	self.0.last().expect("EMPTY SEQ NOT SUPPORTED").infer_type()
     }
+    pub fn binder(&self) -> Self
+    {
+	self.bind(&VarsRegister::new())
+    }
+
+    fn bind(&self, scope: &VarsRegister) -> Self
+    {
+	Seq(
+	    self.0.iter()
+		.map(|expr|
+		     {
+			 expr.bind(scope)
+		     }
+		).collect::<Vec<_>>()
+	)
+    }   
 }
 #[derive(PartialEq, Debug, Clone)]
 pub enum Type
@@ -51,7 +68,6 @@ pub enum Expression
     Terminal(Terminal),
     Identifier(Identifier),
 
-
     Unary(Unop, Box<Expression>),
     Binary(Binop, Box<Expression>, Box<Expression>),
 
@@ -59,6 +75,8 @@ pub enum Expression
     Block(Seq),
     LetIn(VarsRegister, Seq),
     Primitive(Primitive, Box<Expression>),
+
+    Binding(Arc<Expression>),
 }
 
 
@@ -145,9 +163,49 @@ impl Expression
 	    Self::Block(seq) => seq.infer_type(),
 	    Self::LetIn(reg, seq) => seq.infer_type(),
 	    Self::Primitive(_, _) => Ok(Type::Nil),
+
+	    Self::Binding(ptr) => (*ptr).infer_type()
 	    
 	}
     }
     
+    fn bind(&self, scope: &VarsRegister) -> Self
+    {
+	match self
+	{
+	    Self::Terminal(_) => self.clone(),
+	    Self::Identifier(id) =>
+		scope.get_binding(&id).unwrap(),
+
+	    Self::Unary(op, ptr) =>
+		Self::Unary(
+		    op.clone(),
+		    Box::new((*ptr).bind(scope))
+		),
+
+	    Self::Binary(op, ptr_a, ptr_b) =>
+		Self::Binary(
+		    op.clone(),
+		    Box::new((*ptr_a).bind(scope)),
+		    Box::new((*ptr_b).bind(scope))
+		),
+
+	    Self::If(ptr, seq_a, seq_b) =>
+		Self::If(
+		    Box::new((*ptr).bind(scope)),
+		    seq_a.bind(scope),
+		    seq_b.bind(scope),
+		),
+
+	    Self::Block(seq) => Self::Block(seq.bind(scope)),
+
+	    Self::LetIn(local_scope, seq) =>
+		Self::Block(seq.bind(&scope.merged(&local_scope))),
+	    Self::Primitive(prim, ptr) =>
+		Self::Primitive(prim.clone(), Box::new((*ptr).bind(scope))),
+	    Binding  => unreachable!()
+	}
+    }
+
 }
 

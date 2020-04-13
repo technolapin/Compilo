@@ -92,6 +92,10 @@ impl fmt::Display for Expression
 	    {
 		write!(f, "{}({})", prim, *expr)
 	    },
+	    Expression::Binding(ptr) =>
+	    {
+		write!(f, "{}", *ptr)
+	    },
 	    
 	    
 	}

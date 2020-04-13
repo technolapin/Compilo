@@ -8,6 +8,7 @@ pub use operators::*;
 pub use terminal::*;
 
 
+use std::sync::Arc;
 
 
 
@@ -51,7 +52,7 @@ impl Identifier
 
 use std::collections::HashMap;
 #[derive(Debug, PartialEq, Clone)]
-pub struct VarsRegister(HashMap<Identifier, Expression>);
+pub struct VarsRegister(HashMap<Identifier, Arc<Expression>>);
 impl VarsRegister
 {
     pub fn new() -> Self
@@ -65,9 +66,26 @@ impl VarsRegister
     pub fn with_added(self, key: Identifier, val: Expression) -> Self
     {
 	let mut hashmap = self.0;
-	hashmap.insert(key, val);
+	hashmap.insert(key, Arc::new(val));
 	Self(hashmap)
     }
+    pub fn merged(&self, other: &Self) -> Self
+    {
+	let mut hashmap = self.0.clone();
+	other.0.iter()
+	    .for_each(|(k, v)| {hashmap.insert(k.clone(), v.clone());});
+	Self(hashmap)
+    }
+
+    pub fn get_binding(&self, id: &Identifier) -> Result<Expression, String>
+    {
+	match self.0.get(id)
+	{
+	    None => Err(format!("BINDING ERROR: identifier {} out of scope", id)),
+	    Some(ptr) => Ok(Expression::Binding(ptr.clone()))
+	}
+    }
+    
     pub fn random(depth: u32) -> Self
     {
 	(0..(rand::random::<u32>()%6+1))

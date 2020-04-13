@@ -31,6 +31,21 @@ fn type_inference(s: &str)
     }
 }
 
+fn bind(s: &str)
+{
+    let parsed = parser::SeqParser::new().parse(s);
+    if let Ok(seq) = parsed
+    {
+	println!("ORIGINAL: {:?}", seq);
+	println!("BINDED  : {:?}", seq.binder());
+    }
+    else
+    {
+	println!("failed parsing")
+    }
+    
+}
+
 
 fn test_identif(s: &str)
 {
@@ -94,8 +109,12 @@ end
     println!();
 
 
+
+    bind("let var i:=1 in 2+i end");
     
-    if true
+
+    
+    if false
     {
 	println!("RANDOM_TEST");
 	let rand_expr = *Expression::random(3);
