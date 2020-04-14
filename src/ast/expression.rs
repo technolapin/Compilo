@@ -51,14 +51,30 @@ impl Seq
 		     }
 		).collect::<Vec<_>>()
 	)
-    }   
+    }
+
+    fn merge(&self, other: &Self) -> Self
+    {
+	let mut new = self.0.clone();
+	new.extend_from_slice(&other.0);
+	Self(new)
+    }
+
+    pub fn reduce(&self) -> Terminal
+    {
+	self.0.iter()
+	    .fold(Terminal::Nil, |_, expr| expr.reduce())
+    }
 }
+
+
 #[derive(PartialEq, Debug, Clone)]
 pub enum Type
 {
     Nil,
     Int,
     String,
+    Bool,
     Unknown // used durring type inference
 }
 
@@ -115,8 +131,8 @@ impl Expression
 	match self
 	{
 	    Self::Terminal(ter) => ter.infer_type(),
-	    Self::Identifier(id) => Ok(Type::Unknown),
-	    Self::Unary(unop, exp) => (*exp).infer_type(),
+	    Self::Identifier(_id) => Ok(Type::Unknown),
+	    Self::Unary(_unop, exp) => (*exp).infer_type(),
 	    Self::Binary(binop, a, b) =>
 	    {
 		let t_a = (*a).infer_type()?;
@@ -138,7 +154,7 @@ impl Expression
 		    Err(format!("{:?} cannot be applied to {:?} and {:?}", binop, t_a, t_b))
 		}
 	    },
-	    Self::If(cond, sa, sb) =>
+	    Self::If(_cond, sa, sb) =>
 	    {
 		let t_a = sa.infer_type()?;
 		let t_b = sb.infer_type()?;
@@ -161,7 +177,7 @@ impl Expression
 		
 	    },
 	    Self::Block(seq) => seq.infer_type(),
-	    Self::LetIn(reg, seq) => seq.infer_type(),
+	    Self::LetIn(_reg, seq) => seq.infer_type(),
 	    Self::Primitive(_, _) => Ok(Type::Nil),
 
 	    Self::Binding(ptr) => (*ptr).infer_type()
@@ -169,13 +185,13 @@ impl Expression
 	}
     }
     
-    fn bind(&self, scope: &VarsRegister) -> Self
+    pub fn bind(&self, scope: &VarsRegister) -> Self
     {
 	match self
 	{
 	    Self::Terminal(_) => self.clone(),
 	    Self::Identifier(id) =>
-		scope.get_binding(&id).unwrap(),
+		scope.get_binding(&id, scope).unwrap(),
 
 	    Self::Unary(op, ptr) =>
 		Self::Unary(
@@ -200,12 +216,220 @@ impl Expression
 	    Self::Block(seq) => Self::Block(seq.bind(scope)),
 
 	    Self::LetIn(local_scope, seq) =>
-		Self::Block(seq.bind(&scope.merged(&local_scope))),
+	    {
+		//	let binded_scope = local_scope.as_seq().bind(scope);
+			let binded_scope = local_scope.bind(scope);
+		Self::Block(
+		    binded_scope.as_seq()
+			.merge(
+			    &seq.bind(&scope.merged(&binded_scope))
+			)
+		)
+	    },
 	    Self::Primitive(prim, ptr) =>
 		Self::Primitive(prim.clone(), Box::new((*ptr).bind(scope))),
-	    Binding  => unreachable!()
+	    Self::Binding(_)  => self.clone()
 	}
     }
 
+    pub fn reduce(&self) -> Terminal
+    {
+	match self
+	{
+	    Self::Terminal(t) => t.clone(),
+	    Self::Identifier(id) => panic!("UNBINDED IDENTIFIER"),
+	    Self::Unary(op, ptr) =>
+	    {
+		match op
+		{
+		    Unop::Minus =>
+		    {
+			match (*ptr).reduce()
+			{
+			    Terminal::Int(v) => Terminal::Int(-v),
+			    _ => panic!("RUNTIME ERROR: ATTEMPT TO USE UNOP - ON A NON-INT VALUE")
+			}
+		    },
+		    Unop::Plus =>
+		    {
+			match (*ptr).reduce()
+			{
+			    Terminal::Int(v) => Terminal::Int(v),
+			    _ => panic!("RUNTIME ERROR: ATTEMPT TO USE UNOP + ON A NON-INT VALUE")
+			}
+		    },
+		    _ => unimplemented!()
+		}
+	    },
+	    Self::Binary(op, ptr_a, ptr_b) =>
+	    {
+		let a = (*ptr_a).reduce();
+		let b = (*ptr_b).reduce();
+		match op
+		{
+		    Binop::Add =>
+		    {
+			match (a, b)
+			{
+			    (Terminal::Int(a), Terminal::Int(b)) => Terminal::Int(a+b),
+			    _ => unimplemented!()
+			}
+		    },
+		    Binop::Sub =>
+		    {
+			match (a, b)
+			{
+			    (Terminal::Int(a), Terminal::Int(b)) => Terminal::Int(a-b),
+			    _ => unimplemented!()
+			}
+		    },
+		    Binop::Mul =>
+		    {
+			match (a, b)
+			{
+			    (Terminal::Int(a), Terminal::Int(b)) => Terminal::Int(a*b),
+			    _ => unimplemented!()
+			}
+		    },
+		    Binop::Div =>
+		    {
+			match (a, b)
+			{
+			    (Terminal::Int(a), Terminal::Int(b)) => Terminal::Int(a/b),
+			    _ => unimplemented!()
+			}
+		    },
+		    Binop::Modulo =>
+		    {
+			match (a, b)
+			{
+			    (Terminal::Int(a), Terminal::Int(b)) => Terminal::Int(a%b),
+			    _ => unimplemented!()
+			}
+		    },
+		    Binop::Less =>
+		    {
+			match (a, b)
+			{
+			    (Terminal::Int(a), Terminal::Int(b)) => Terminal::Bool(a<b),
+			    _ => unimplemented!()
+			}
+		    },
+		    Binop::Greater =>
+		    {
+			match (a, b)
+			{
+			    (Terminal::Int(a), Terminal::Int(b)) => Terminal::Bool(a>b),
+			    _ => unimplemented!()
+			}
+		    },
+		    Binop::LessEqual =>
+		    {
+			match (a, b)
+			{
+			    (Terminal::Int(a), Terminal::Int(b)) => Terminal::Bool(a<=b),
+			    _ => unimplemented!()
+			}
+		    },
+		    Binop::GreaterEqual =>
+		    {
+			match (a, b)
+			{
+			    (Terminal::Int(a), Terminal::Int(b)) => Terminal::Bool(a>=b),
+			    _ => unimplemented!()
+			}
+		    },
+		    Binop::Equal =>
+		    {
+			match (a, b)
+			{
+			    (Terminal::Int(a), Terminal::Int(b)) => Terminal::Bool(a==b),
+			    _ => unimplemented!()
+			}
+		    },
+		    Binop::NotEqual =>
+		    {
+			match (a, b)
+			{
+			    (Terminal::Int(a), Terminal::Int(b)) => Terminal::Bool(a!=b),
+			    _ => unimplemented!()
+			}
+		    },
+		    Binop::BitAnd =>
+		    {
+			match (a, b)
+			{
+			    (Terminal::Int(a), Terminal::Int(b)) => Terminal::Int(a&b),
+			    _ => unimplemented!()
+			}
+		    },
+		    Binop::Xor =>
+		    {
+			match (a, b)
+			{
+			    (Terminal::Int(a), Terminal::Int(b)) => Terminal::Int(a^b),
+			    _ => unimplemented!()
+			}
+		    },
+		    Binop::BitOr =>
+		    {
+			match (a, b)
+			{
+			    (Terminal::Int(a), Terminal::Int(b)) => Terminal::Int(a|b),
+			    _ => unimplemented!()
+			}
+		    },
+		    Binop::And =>
+		    {
+			match (a, b)
+			{
+			    (Terminal::Bool(a), Terminal::Bool(b)) => Terminal::Bool(a&&b),
+			    _ => unimplemented!()
+			}
+		    },
+		    Binop::Or =>
+		    {
+			match (a, b)
+			{
+			    (Terminal::Bool(a), Terminal::Bool(b)) => Terminal::Bool(a||b),
+			    _ => unimplemented!()
+			}
+		    },
+		}
+	    },
+	    Self::If(ptr, seq_a, seq_b) =>
+	    {
+		let cond = (*ptr).reduce();
+		let a = seq_a.reduce();
+		let b = seq_b.reduce();
+		match cond
+		{
+		    Terminal::Bool(cond) => if cond {a} else {b},
+		    _ => unimplemented!()
+		    
+		}
+	    },
+	    Self::Block(seq) =>
+	    {
+		seq.reduce()
+	    },
+	    Self::LetIn(_, _) => unreachable!(),
+	    Self::Primitive(prim, ptr) =>
+	    {
+		match prim
+		{
+		    Primitive::Print =>
+		    {
+			println!("{}", (*ptr).reduce());
+			Terminal::Nil
+		    }
+		}
+	    },
+	    Self::Binding(ptr) =>
+	    {
+		(*ptr).reduce()
+	    }
+	}
+    }
 }
 

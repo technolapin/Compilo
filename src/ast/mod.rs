@@ -77,13 +77,29 @@ impl VarsRegister
 	Self(hashmap)
     }
 
-    pub fn get_binding(&self, id: &Identifier) -> Result<Expression, String>
+    pub fn get_binding(&self, id: &Identifier, scope: &Self) -> Result<Expression, String>
     {
 	match self.0.get(id)
 	{
 	    None => Err(format!("BINDING ERROR: identifier {} out of scope", id)),
-	    Some(ptr) => Ok(Expression::Binding(ptr.clone()))
+	    Some(ptr) => Ok(Expression::Binding(
+		Arc::new((*ptr).bind(scope))))
 	}
+    }
+
+    pub fn bind(&self, scope: &Self) -> Self
+    {
+	Self(
+	    self.0.iter()
+		.map(|(id, arc)| (id.clone(), Arc::new((*arc).bind(scope))))
+		.collect::<HashMap<_, _>>()
+	)
+    }
+    
+    /// returns the sequence of all the expressions of the declarations (as bindings)
+    pub fn as_seq(&self) -> Seq
+    {
+	Seq(self.0.values().map(|arc| Expression::Binding(arc.clone())).collect::<Vec<_>>())
     }
     
     pub fn random(depth: u32) -> Self

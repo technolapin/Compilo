@@ -3,9 +3,10 @@ use super::Type;
 #[derive(Debug, PartialEq, Clone)]
 pub enum Terminal
 {
-    Int(u32),
+    Int(i32),
     String(String),
     Nil,
+    Bool(bool),
 }
 
 
@@ -18,9 +19,9 @@ impl Terminal
     {
 	use rand::{thread_rng, Rng};
 	use rand::distributions::Alphanumeric;
-	match rand::random::<u32>() % 3
+	match rand::random::<u32>() % 4
 	{
-	    0 => Terminal::Int(rand::random::<u32>()),
+	    0 => Terminal::Int(rand::random::<u32>() as i32),
 	    1 => {
 		Terminal::String(thread_rng()
 				 .sample_iter(&Alphanumeric)
@@ -28,6 +29,7 @@ impl Terminal
 				 .collect())
 	    },
 	    2 => Terminal::Nil,
+	    3 => Terminal::Bool(rand::random::<bool>()),
 	    _ => unreachable!()
 	}
     }
@@ -38,6 +40,7 @@ impl Terminal
 	    Self::Nil => Type::Nil,
 	    Self::Int(_) => Type::Int,
 	    Self::String(_) => Type::String,
+	    Self::Bool(_) => Type::Bool,
 	})
     }
 }

@@ -121,8 +121,14 @@ pub Identif: Identifier =
 
 // only recognize positive numbers
 // negatives ones will be recognised as a positive and a unary -
-Int: u32 = <s:r"[0-9]+"> => u32::from_str(s).unwrap();
-Nil: () = "()" => ();
+Int: i32 = <s:r"[0-9]+"> => u32::from_str(s).unwrap() as i32;
+Nil: () = "nil" => ();
+Bool: bool =
+{
+	"true" => true,
+	"false" => false
+}
+
 String: String = <s: r#""[^"]*""#> => String::from(&s[1..s.len()-1]);
 
 ////////////////////////////////////
@@ -274,6 +280,8 @@ LiteralExpr: Box<Expression> =
 	Int => Box::new(Expression::Terminal(Terminal::Int(<>))),
 	Nil => Box::new(Expression::Terminal(Terminal::Nil)),
 	String => Box::new(Expression::Terminal(Terminal::String(<>))),
+	Bool => Box::new(Expression::Terminal(Terminal::Bool(<>))),
+
 }
 
 IdentifierExpr: Box<Expression> =

@@ -23,6 +23,21 @@ impl fmt::Display for Seq
     }
 }
 
+impl fmt::Display for Terminal
+{
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result
+    {
+
+	match self
+	{
+	    Terminal::Int(x) => write!(f, "{}", x),
+	    Terminal::String(x) => write!(f, r#""{}""#, x),
+	    Terminal::Nil => write!(f, "nil"),
+	    Terminal::Bool(b) => write!(f, "{}", b)
+	}
+    }
+}
+
 impl fmt::Display for Expression
 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result
@@ -69,12 +84,7 @@ impl fmt::Display for Expression
 	    },
 	    Expression::Terminal(term) =>
 	    {
-		match term
-		{
-		    Terminal::Int(x) => write!(f, "{}", x),
-		    Terminal::String(x) => write!(f, r#""{}""#, x),
-		    Terminal::Nil => write!(f, "()"),		    
-		}
+		write!(f, "{}", term)
 	    },
 	    Expression::Block(seq) =>
 	    {
