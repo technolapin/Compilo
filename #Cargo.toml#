@@ -1,0 +1,13 @@
+[package]
+name = "compilo"
+version = "0.1.0"
+authors = ["technolapin <clement.chomicki@protonmail.com>"]
+edition = "2018"
+
+[build-dependencies]
+lalrpop = "0.17.2"
+
+[dependencies]
+lalrpop-util = "0.18.1"
+regex = "1"
+rand="*"

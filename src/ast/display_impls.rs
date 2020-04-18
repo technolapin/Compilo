@@ -38,6 +38,8 @@ impl fmt::Display for Terminal
     }
 }
 
+
+
 impl fmt::Display for Expression
 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result
@@ -48,8 +50,6 @@ impl fmt::Display for Expression
 	    {
 		match op
 		{
-		    Unop::Decrement => write!(f, "(-- {})", *exp),
-		    Unop::Increment => write!(f, "(++ {})", *exp),
 		    Unop::Minus => write!(f, "(- {})", *exp),
 		    Unop::Plus => write!(f, "(+ {})", *exp),
 		    Unop::Not => write!(f, "(! {})", *exp),
@@ -57,25 +57,7 @@ impl fmt::Display for Expression
 	    }
 	    Expression::Binary(op, exp_a, exp_b) =>
 	    {
-		match op
-		{
-		    Binop::Add => write!(f, "({} + {})", *exp_a, exp_b),
-		    Binop::Sub => write!(f, "({} - {})", *exp_a, exp_b),
-		    Binop::Mul => write!(f, "({} * {})", *exp_a, exp_b),
-		    Binop::Div => write!(f, "({} / {})", *exp_a, exp_b),
-		    Binop::Modulo => write!(f, "({} % {})", *exp_a, exp_b),
-		    Binop::Less => write!(f, "({} < {})", *exp_a, exp_b),
-		    Binop::Greater => write!(f, "({} > {})", *exp_a, exp_b),
-		    Binop::LessEqual => write!(f, "({} <= {})", *exp_a, exp_b),
-		    Binop::GreaterEqual => write!(f, "({} >= {})", *exp_a, exp_b),
-		    Binop::Equal => write!(f, "({} == {})", *exp_a, *exp_b),
-		    Binop::NotEqual => write!(f, "({} != {})", *exp_a, *exp_b),
-		    Binop::BitAnd => write!(f, "({} & {})", *exp_a, *exp_b),
-		    Binop::Xor => write!(f, "({} ^ {})", *exp_a, *exp_b),
-		    Binop::BitOr => write!(f, "({} | {})", *exp_a, *exp_b),
-		    Binop::And => write!(f, "({} && {})", *exp_a, *exp_b),
-		    Binop::Or => write!(f, "({} || {})", *exp_a, *exp_b),
-		}
+		write!(f, "({} {} {})", *exp_a, op, *exp_b)
 	    }
 	    
 	    Expression::If(cond, seq_a, seq_b) =>
@@ -102,12 +84,56 @@ impl fmt::Display for Expression
 	    {
 		write!(f, "{}({})", prim, *expr)
 	    },
-	    Expression::Binding(ptr) =>
+	    Expression::IdopOne(op, id, ptr) => match op
 	    {
-		write!(f, "{}", *ptr)
+		IdopOne::Assign =>
+		{
+		    write!(f, "{} := {}", id, *ptr)
+		},
+		_ => unimplemented!()
 	    },
-	    
-	    
+	    Expression::IdopNone(op, id) => match op
+	    {
+		IdopNone::IncrPostfix | IdopNone::DecrPostfix =>
+		{
+		    write!(f, "{} {}", id, op)
+		},
+		IdopNone::IncrPrefix | IdopNone::DecrPrefix =>
+		{
+		    write!(f, "{} {}", op, id)
+		},
+	    },
+	    Expression::For(id, from, to, seq) =>
+	    {
+		write!(f, "for {} := {} to {} do\n {}",
+		       id,
+		       *from,
+		       *to,
+		       seq
+		)
+	    },
+	    Expression::While(expr, seq) =>
+	    {
+		write!(f, "while {} do\n{}",
+		       *expr,
+		       seq
+		)
+	    },
+	}
+    }
+}
+
+
+impl fmt::Display for Type
+{
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result
+    {
+	match self
+	{
+	    Type::Nil => write!(f, "nil"),
+	    Type::Int => write!(f, "int"),
+	    Type::Bool => write!(f, "bool"),
+	    Type::String => write!(f, "str"),	
 	}
     }
 }
@@ -144,5 +170,65 @@ impl fmt::Display for Identifier
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result
     {
 	write!(f, "{}", self.0)
+    }
+}
+
+
+impl fmt::Display for Binop
+{
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result
+    {
+	use Binop::*;
+	match self
+	{
+	    Add => write!(f, "+"),
+	    Sub => write!(f, "-"),
+	    Mul => write!(f, "*"),
+	    Div => write!(f, "/"),
+	    Modulo => write!(f, "%"),
+	    Less => write!(f, "<"),
+	    Greater => write!(f, ">"),
+	    LessEqual => write!(f, "<="),
+	    GreaterEqual => write!(f, ">="),
+	    NotEqual => write!(f, "<>"),
+	    Equal => write!(f, "="),
+	    BitAnd => write!(f, "&"),
+	    Xor => write!(f, "^"),
+	    BitOr => write!(f, "|"),
+	    And => write!(f, "&&"),
+	    Or => write!(f, "||"),
+	}
+    }
+}
+
+impl fmt::Display for Unop
+{
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result
+    {
+	use Unop::*;
+	match self
+	{
+	    Plus => write!(f, "+"),
+	    Minus => write!(f, "-"),
+	    Not => write!(f, "!"),
+
+	}
+    }
+}
+
+
+impl fmt::Display for IdopNone
+{
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result
+    {
+	use IdopNone::*;
+	match self
+	{
+	    IncrPostfix => write!(f, "++"),
+	    IncrPrefix => write!(f, "++"),
+	    DecrPostfix => write!(f, "--"),
+	    DecrPrefix => write!(f, "--"),
+
+	}
     }
 }

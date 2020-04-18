@@ -1,12 +1,11 @@
 #[derive(Debug, PartialEq, Clone)]
 pub enum Unop
 {
-    Increment,
-    Decrement,
     Minus,
     Plus,
     Not,
 }
+
 #[derive(Debug, PartialEq, Clone)]
 pub enum Binop
 {
@@ -28,6 +27,20 @@ pub enum Binop
     Or,
 }
 
+#[derive(Debug, PartialEq, Clone)]
+pub enum IdopOne
+{
+    Assign,
+}
+#[derive(Debug, PartialEq, Clone)]
+pub enum IdopNone
+{
+    IncrPostfix,
+    IncrPrefix,
+    DecrPostfix,
+    DecrPrefix,
+
+}
 
 impl Unop
 {

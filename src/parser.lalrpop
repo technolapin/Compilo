@@ -22,16 +22,11 @@ PrimitiveToken: Primitive =
 {
 	"print" => Primitive::Print,
 }
+
 pub Seq: Seq =
 {
-	SeqTerminate,
-	SeqNonTerminate
-}
-
-SeqNonTerminate: Seq =
-{
-	SimpleExpr => Seq::new(*<>),
-	<s: SeqNonTerminate> StatDelimiter <maybe_e: SimpleExpr?> =>
+	Expr => Seq::new(*<>),
+	<s: Seq> StatDelimiter <maybe_e: Expr?> =>
 	if let Some(e) = maybe_e
 	{
 		Seq::pushed(s, *e)
@@ -40,12 +35,6 @@ SeqNonTerminate: Seq =
 	{
 		Seq::pushed(s, Expression::Terminal(Terminal::Nil))
 	}
-}
-
-SeqTerminate: Seq =
-{
-	ControlFlowExpr => Seq::new(*<>),
-	<s: SeqNonTerminate> StatDelimiter <e: ControlFlowExpr> => Seq::pushed(s, *e)
 }
 
 SeqBlock: Box<Expression> =
@@ -59,19 +48,14 @@ SeqBlock: Box<Expression> =
 // Expressions //////////
 pub Expr: Box<Expression> =
 {
-	SimpleExpr,
-	ControlFlowExpr
-}
-
-SimpleExpr =
-{
 	Precedency17,
-};
-
-ControlFlowExpr: Box<Expression> =
-{
 	IfExpr,
+	WhileExpr,
+	ForExpr,
 }
+
+
+
 
 
 /////////////////////
@@ -82,39 +66,6 @@ pub Identif: Identifier =
 	"_main" => Identifier::new(<>),
 	r#"[[:alpha:]][[:word:]]*"# => Identifier::new(<>),
 }
-
-/////////////////////
-// Types ////////////
-
-//Type: 
-
-
-
-
-/////////////////////
-// Declarations /////
-
-// Decls: Declaration =
-// {
-// 	TypeDecl,
-// 	ClassDecl,
-// 	VarDecl,
-// 	FunDecl,
-// 	PrimDecl,
-// 	MethDecl,
-// 	ImportDecl
-// }
-
-// TypeDecl: Declaration =
-// {
-// //	"type" Identifier '=' Type
-// }
-// ClassDecl: Declaration = {}
-// VarDecl: Declaration = {}
-// FunDecl: Declaration = {}
-// PrimDecl: Declaration = {}
-// MethDecl: Declaration = {}
-// ImportDecl: Declaration = {}
 
 /////////////////////
 // Values ///////////
@@ -153,8 +104,8 @@ Precedency1: Box<Expression> =
 Precedency2: Box<Expression> =
 {
 	Precedency1,
-	SufixIncrementExpr,
-	SufixDecrementExpr
+//	SufixIncrementExpr,
+//	SufixDecrementExpr
 }
 
 // moins unaire, not
@@ -164,8 +115,8 @@ Precedency3: Box<Expression> =
 	MinusExpr,
 	PlusExpr,
 	NotExpr,
-	PrefixIncrementExpr,
-	PrefixDecrementExpr
+//	PrefixIncrementExpr,
+//	PrefixDecrementExpr
 }
 
 Precedency4: Box<Expression> =
@@ -248,10 +199,11 @@ Precedency14: Box<Expression> =
 	OrExpr,
 }
 
-// I put If there for now, not in the list
+// I put If there for now, not in the lis
 Precedency15: Box<Expression> =
 {
 	Precedency14,
+	IdopExpr,
 	LetInExpr,
 	
 }
@@ -298,23 +250,23 @@ ParenthesisExpr: Box<Expression> =
 
 // 1
 // 2
-SufixDecrementExpr: Box<Expression> =
-{
-	<a: Precedency2> "--" => Box::new(Expression::Unary(Unop::Decrement, a))
-}
-SufixIncrementExpr: Box<Expression> =
-{
-	<a: Precedency2> "++" => Box::new(Expression::Unary(Unop::Increment, a))
-}
-// 3
-PrefixDecrementExpr: Box<Expression> =
-{
-	"--" <a: Precedency3> => Box::new(Expression::Unary(Unop::Decrement, a))
-}
-PrefixIncrementExpr: Box<Expression> =
-{
-	"++" <a: Precedency3> => Box::new(Expression::Unary(Unop::Increment, a))
-}
+// SufixDecrementExpr: Box<Expression> =
+// {
+// 	<a: Precedency2> "--" => Box::new(Expression::Unary(Unop::Decrement, a))
+// }
+// SufixIncrementExpr: Box<Expression> =
+// {
+// 	<a: Precedency2> "++" => Box::new(Expression::Unary(Unop::Increment, a))
+// }
+// // 3
+// PrefixDecrementExpr: Box<Expression> =
+// {
+// 	"--" <a: Precedency3> => Box::new(Expression::Unary(Unop::Decrement, a))
+// }
+// PrefixIncrementExpr: Box<Expression> =
+// {
+// 	"++" <a: Precedency3> => Box::new(Expression::Unary(Unop::Increment, a))
+// }
 MinusExpr: Box<Expression> =
 {
 	<start:@L> "-" <a: Precedency3> <end:@R> => Box::new(Expression::Unary(Unop::Minus, a))
@@ -382,11 +334,11 @@ GreaterEqualExpr: Box<Expression> =
 // 9
 EqualExpr: Box<Expression> =
 {
-	<a: Precedency9> "==" <b: Precedency8> => Box::new(Expression::Binary(Binop::Equal, a, b))
+	<a: Precedency9> "=" <b: Precedency8> => Box::new(Expression::Binary(Binop::Equal, a, b))
 }
 NotEqualExpr: Box<Expression> =
 {
-	<a: Precedency9> "!=" <b: Precedency8> => Box::new(Expression::Binary(Binop::NotEqual, a, b))
+	<a: Precedency9> "<>" <b: Precedency8> => Box::new(Expression::Binary(Binop::NotEqual, a, b))
 }
 
 // 10
@@ -421,8 +373,8 @@ OrExpr: Box<Expression> =
 // 15
 pub IfExpr: Box<Expression> =
 {
-	"if" <cond: Expr> "then" <seq1: Seq> "else" <seq2: Seq> =>
-  	     Box::new(Expression::If(cond, seq1, seq2)),
+	"if" <cond: Expr> "then" <exp1: Expr> "else" <exp2: Expr> =>
+  	     Box::new(Expression::If(cond, exp1, exp2)),
 
 }
 LetInExpr: Box<Expression> =
@@ -445,3 +397,34 @@ DeclList: VarsRegister =
 }
 
 
+IdopExpr: Box<Expression> =
+{
+	IdopOneExpr,
+	IdopNoneExpr
+}
+IdopOneExpr: Box<Expression> =
+{
+	<id: Identif> ":=" <e: Expr> => Box::new(Expression::IdopOne(IdopOne::Assign, id, e))
+
+}
+IdopNoneExpr: Box<Expression> =
+{
+	<id: Identif> "++" => Box::new(Expression::IdopNone(IdopNone::IncrPostfix, id,)),
+	"++" <id: Identif> => Box::new(Expression::IdopNone(IdopNone::IncrPrefix, id,)),
+	<id: Identif> "--" => Box::new(Expression::IdopNone(IdopNone::DecrPostfix, id,)),
+	"--" <id: Identif> => Box::new(Expression::IdopNone(IdopNone::DecrPrefix, id,)),
+
+}
+
+WhileExpr: Box<Expression> =
+{
+	"while" <cond: Expr> "do" <exp: Expr> => Box::new(
+		Expression::While(cond, exp)
+	)
+}
+ForExpr: Box<Expression> =
+{
+	"for" <id: Identif> ":=" <from: Expr> "to" <to: Expr> "do" <exp: Expr> => Box::new(
+		Expression::For(id, from, to, exp)
+	)
+}

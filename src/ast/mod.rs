@@ -2,30 +2,16 @@ mod expression;
 mod operators;
 mod terminal;
 mod display_impls; // for the pretty print (no structs)
+mod seq;
 
 pub use expression::*;
 pub use operators::*;
 pub use terminal::*;
+pub use seq::Seq;
 
 
-use std::sync::Arc;
 
 
-
-/*
-pub enum Declaration
-{
-    Type,
-    Class,
-    Var,
-    Fun,
-    Prim,
-    Meth,
-    Import    
-}
-
-
-*/
 #[derive(Debug, PartialEq, Hash, Eq, Clone)]
 pub struct Identifier(String);
 
@@ -52,7 +38,7 @@ impl Identifier
 
 use std::collections::HashMap;
 #[derive(Debug, PartialEq, Clone)]
-pub struct VarsRegister(HashMap<Identifier, Arc<Expression>>);
+pub struct VarsRegister(HashMap<Identifier, Expression>);
 impl VarsRegister
 {
     pub fn new() -> Self
@@ -66,7 +52,7 @@ impl VarsRegister
     pub fn with_added(self, key: Identifier, val: Expression) -> Self
     {
 	let mut hashmap = self.0;
-	hashmap.insert(key, Arc::new(val));
+	hashmap.insert(key, val);
 	Self(hashmap)
     }
     pub fn merged(&self, other: &Self) -> Self
@@ -77,31 +63,18 @@ impl VarsRegister
 	Self(hashmap)
     }
 
+    /*
     pub fn get_binding(&self, id: &Identifier, scope: &Self) -> Result<Expression, String>
     {
 	match self.0.get(id)
 	{
 	    None => Err(format!("BINDING ERROR: identifier {} out of scope", id)),
-	    Some(ptr) => Ok(Expression::Binding(
-		Arc::new((*ptr).bind(scope))))
+	    Some(exp) => Ok(Expression::Binding(
+		exp.bind(scope)))
 	}
     }
+*/
 
-    pub fn bind(&self, scope: &Self) -> Self
-    {
-	Self(
-	    self.0.iter()
-		.map(|(id, arc)| (id.clone(), Arc::new((*arc).bind(scope))))
-		.collect::<HashMap<_, _>>()
-	)
-    }
-    
-    /// returns the sequence of all the expressions of the declarations (as bindings)
-    pub fn as_seq(&self) -> Seq
-    {
-	Seq(self.0.values().map(|arc| Expression::Binding(arc.clone())).collect::<Vec<_>>())
-    }
-    
     pub fn random(depth: u32) -> Self
     {
 	(0..(rand::random::<u32>()%6+1))
@@ -111,6 +84,21 @@ impl VarsRegister
 		  )
 	    )
     }
+
+    pub fn iter(&self) -> std::collections::hash_map::Iter<Identifier, Expression>
+    {
+	self.0.iter()
+    }
+
+    pub fn propagate<F>(&self, lambda: &F) -> Self
+    where
+	F: Fn(&Expression) -> Expression
+    {
+	Self(
+	    self.0.iter()
+		.map(|(id, expr)| (id.clone(), expr.propagate(lambda))).collect()
+	)
+    }    
 }
 
 

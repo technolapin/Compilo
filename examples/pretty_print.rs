@@ -16,7 +16,7 @@ fn type_inference(s: &str)
     if let Ok(seq) = parsed
     {
 	println!("{:?}", seq);
-	println!("INFERED TYPE: {:?}", seq.infer_type());
+	println!("INFERED TYPE: {:?}", seq.infer_type(&mut Binder::new()));
     }
     else
     {
@@ -24,31 +24,16 @@ fn type_inference(s: &str)
     }
 }
 
-fn bind(s: &str)
-{
-    let parsed = parser::SeqParser::new().parse(s);
-    if let Ok(seq) = parsed
-    {
-	println!("ORIGINAL:\n{}", seq);
-	println!();
-	println!("BINDED  :\n{}", seq.binder());
-    }
-    else
-    { 
-	println!("failed parsing:\n{:?}", parsed);
-    }
-    
-}
 
 fn run(s: &str)
 {
     println!("running: {}", s);
     let seq = parser::SeqParser::new().parse(s).expect("FAILED PARSING");
-    let binded = seq.binder();
-    println!("Binded: {}", binded);
-    println!("Infered type: {:?}", binded.infer_type());
+    println!("Infered type: {:?}", seq.infer_type(&mut Binder::new()));
+    let desug = seq.desugar();
+    print!("DESUGARIZED CODE:\n{}", desug);
     println!("OUTPUT:");
-    println!("RESULT: {}", binded.reduce());
+    println!("RESULT: {}", desug.reduce(&mut Context::new()));
 }
 
 
@@ -115,10 +100,8 @@ end
 
 
 
-    bind("let var i:=1 in 2+i end");
     println!();
     
-    bind(&format!("{}", *Expression::random(4)));
     
     if false
     {
@@ -140,48 +123,88 @@ end
 	println!();
 	type_inference(pretty_printed.as_str());
     }
-    
-    println!("\n\n");
-    let lol = r#"(let  var atdnfs0NL := { nil;
-"UG4lkvHFBlWMipSPrtvAtx84lkEOm5" }
- var aCkbYId0N := (let  var aLocZmrw4 := "Srgf0lJmqiFTZ1Q0vR6FyC6gvv0Ugn"
- var avp6h41Fj := true
- var anE4JRh1k := "K4JdZMyR4ZMYSuFf95uM82N5uOMXLD"
- var azFJzIz9C := true
- var aFOFkGqYC := true
- var a2s3kLlXQ := false
- in false;
-"d8QSY8b5jK3yBdoqmLRtFFaUGkQOoH" end)
- var a64ZGcP40 := { true;
-770611747;
-true;
-980049709 }
- in (if (let  var aFuUaReJN := true
- var aHkqx2XCR := nil
- var axaZ0ek5B := true
- var aMJZjDxq6 := nil
- var arPCQBCZW := (- 458676909)
- in "7iPrLyCL0LyEPQcShk4j0LHebpgNA4" end) then "5xNoGYkisYsabu7Z6wovICyDYzahX2";
-"E3tJzbk5Lhrsnhrc43u3MlJko6outC";
-"IjrcrPbGGxsShbNPW6HDtRn58YFhYm" else true;
-"4rRBL1ueK1YpWswq5zr4W5kUsQPn4C") end)"#;
-    bind(lol);
-
-    println!("\n\n");
-    let lol = "{let var i:= (let var j := 2 in j end) in i+1 end}";
-    bind(lol);
-
 
     let lol = r#"
-let var i:= 3
+let var iA_b4:= 3
 in
-  print(i+1)
+  print(iA_b4+1)
+end
+"#;
+    run(lol);
+
+    let lol = r#"
+let var v:= 0
+in
+  print(v);
+  v := 1;
+  print(v);
 end
 "#;
 
+    let lol = r#"
+let var v:= 0
+in
+  print(v);
+  let var v:= 1
+  in
+    print(v);
+  end;
+  let var v:= 2
+  in
+    print(v);
+  end
+end
+"#;
     run(lol);
 
+    run(r#"
+let var i := 0
+in
+  while i < 8 do
+    {print(i);
+   i := i+1};
+
+end
+"#);
+
+    let comp = Expression::Binary(Binop::Less, Box::new(Expression::Terminal(Terminal::Int(1))), Box::new(Expression::Terminal(Terminal::Int(2)))); 
+    println!("ZAEAZEZAEAZ {}", comp.infer_type(&mut Binder::new()).unwrap());
+
+    println!("\n\nAZIEMZAEMZAMOEAZ");
+    type_inference(r#"
+let var i:="lol"
+in
+  print(i);
+  i := "b";
+end
+"#);
+
+    let lol = r#"
+let var i:= 1
+in
+  for i := 1 to 10
+  do
+    print(i);
+print(i)
+
+end
+"#;
+
+    let parsed = parser::ExprParser::new().parse(lol).expect("CASSÉ LE CODE");
+
+    println!("\n\n\n\n");
+    println!("CODE à DÉSUCRER:\n{}\n", parsed);
+    println!("FOR:\n{}\n", parsed.desugar_for());
+    println!("FOR:\n{}\n", parsed.desugar_for()
+	     .reduce(&mut Context::new()));
     
+    let lol = "if if false then true else false then 1+2 else 2+3";
+    run(lol);
+
+    run("let var i:= 1 in print(i++); print(i) end");
+    run("let var i:= 1 in print(++i); print(i) end");
+    run("let var i:= 1 in print(i--); print(i) end");
+    run("let var i:= 1 in print(--i); print(i) end");
 }
 
 
