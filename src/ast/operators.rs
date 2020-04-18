@@ -31,6 +31,14 @@ pub enum Binop
 pub enum IdopOne
 {
     Assign,
+    IncrBy,
+    DecrBy,
+    MulBy,
+    DivBy,
+    ModBy,
+    AndBy,
+    XorBy,
+    OrBy
 }
 #[derive(Debug, PartialEq, Clone)]
 pub enum IdopNone
@@ -77,6 +85,42 @@ impl Binop
 	    14 => Self::Or,
 	    i => {println!("BIN UNREACH {}", i); unreachable!()}
 	    
+	}
+    }
+}
+
+impl IdopOne
+{
+    pub fn random() -> Self
+    {
+	use IdopOne::*;
+	match rand::random::<u32>() % 9
+	{
+	    0 => IncrBy,
+	    1 => DecrBy,
+	    2 => MulBy,
+	    3 => DivBy,
+	    4 => ModBy,
+	    5 => AndBy,
+	    6 => XorBy,
+	    7 => OrBy,
+	    _ => Assign,
+	}
+    }
+}
+
+
+impl IdopNone
+{
+    pub fn random() -> Self
+    {
+	use IdopNone::*;
+	match rand::random::<u32>() % 4
+	{
+	    0 => IncrPostfix,
+	    1 => DecrPostfix,
+	    2 => IncrPrefix,
+	    _ => DecrPrefix,
 	}
     }
 }

@@ -45,11 +45,15 @@ impl Expression
 	Box::new(
 	    if depth == 0
 	    {
-		Self::Terminal(Terminal::random())
+		match rand::random::<u32>() % 2
+		{
+		    0 => Self::Terminal(Terminal::random()),
+		    _ => Self::Identifier(Identifier::random())
+		}
 	    }
 	    else
 	    {
-		match rand::random::<u32>() % 6
+		match rand::random::<u32>() % 9
 		{
 		    0 => Self::Unary(Unop::random(), Self::random(depth-1)),
 		    1 => Self::Binary(Binop::random(), Self::random(depth-1), Self::random(depth-1)),
@@ -57,7 +61,10 @@ impl Expression
 		    3 => Self::Block(Seq::random(depth-1)),
 		    4 => Self::LetIn(VarsRegister::random(depth-1), Seq::random(depth-1)),
 		    5 => Self::Primitive(Primitive::random(), Self::random(depth-1)),
-		    _ => {println!("EXPR UNREACH"); unreachable!()}
+		    6 => Self::IdopOne(IdopOne::random(), Identifier::random(), Self::random(depth-1)),
+		    7 => Self::IdopNone(IdopNone::random(), Identifier::random()),
+		    8 => Self::While(Self::random(depth-1), Self::random(depth-1)),
+		    _ => Self::For(Identifier::random(), Self::random(depth-1), Self::random(depth-1), Self::random(depth-1)),
 		}
 	    }
 	)
@@ -274,6 +281,7 @@ impl Expression
 	    {
 		let typ_exp = (*ptr).infer_type(binder)?;
 		let typ_id = binder.check_var(id)?;
+		use IdopOne::*;
 		match op
 		{
 		    IdopOne::Assign =>
@@ -283,7 +291,20 @@ impl Expression
 			    return Err(format!("assign error: attempted to assign a {} to a {} variable", typ_exp, typ_id));
 			}
 		    },
-		    _ => ()
+		    IncrBy =>
+		    {
+			if typ_exp != typ_id || !(typ_exp == Type::Int || typ_exp == Type::String)
+			{
+			    return Err(format!("{} cannot be applied to types {} and {}", op, typ_id, typ_exp));
+			}
+		    },
+		    DecrBy | MulBy | DivBy | ModBy | AndBy | XorBy | OrBy =>
+		    {
+			if typ_exp != typ_id || typ_exp != Type::Int
+			{
+			    return Err(format!("{} cannot be applied to types {} and {}", op, typ_id, typ_exp));
+			}
+		    }
 		};
 		Ok(typ_exp)
 	    },
@@ -561,9 +582,9 @@ impl Expression
 		    _ => unimplemented!()
 		}
 	    },
-	    Self::IdopNone(op, id) =>
+	    Self::IdopNone(_, _) =>
 	    {
-
+		// desugared
 		unimplemented!()
 		
 	    },
@@ -602,7 +623,7 @@ impl Expression
 		let init =
 		    VarsRegister::with_first(
 			id.clone(),
-			*from.clone()
+			from.desugar_for()
 		    );
 
 		let cond = Box::new
@@ -611,7 +632,7 @@ impl Expression
 			    (
 				Binop::Less,
 				Box::new(Expression::Identifier(id.clone())),
-				to.clone()
+				Box::new(to.desugar_for())
 			    )
 		    );
 		let incr =
@@ -627,7 +648,7 @@ impl Expression
 				    
 			    ))
 		    );
-		let inner = Seq::new(*expr.clone()).pushed(incr);
+		let inner = Seq::new(expr.desugar_for()).pushed(incr);
 		Self::LetIn
 		    (
 			init,
@@ -650,7 +671,7 @@ impl Expression
 	}
     }
 
-    pub fn desugar_increments(&self) -> Self
+    pub fn desugar_idops(&self) -> Self
     {
 	match self
 	{
@@ -734,10 +755,129 @@ impl Expression
 		    },
 		}
 	    },
+	    Self::IdopOne(op, id, ptr) =>
+	    {
+		match op
+		{
+		    IdopOne::Assign => Self::IdopOne(op.clone(), id.clone(), Box::new(ptr.desugar_idops())),
+		    IdopOne::IncrBy =>
+		    {
+			Expression::IdopOne(
+			    IdopOne::Assign,
+			    id.clone(),
+			    Box::new(
+				Expression::Binary(
+				    Binop::Add,
+				    Box::new(Expression::Identifier(id.clone())),
+				    Box::new((*ptr).desugar_idops())
+				)
+			    )
+			)
+		    },
+		    IdopOne::DecrBy =>
+		    {
+			Expression::IdopOne(
+			    IdopOne::Assign,
+			    id.clone(),
+			    Box::new(
+				Expression::Binary(
+				    Binop::Sub,
+				    Box::new(Expression::Identifier(id.clone())),
+				    Box::new((*ptr).desugar_idops())
+				)
+			    )
+			)
+		    },
+		    IdopOne::MulBy =>
+		    {
+			Expression::IdopOne(
+			    IdopOne::Assign,
+			    id.clone(),
+			    Box::new(
+				Expression::Binary(
+				    Binop::Mul,
+				    Box::new(Expression::Identifier(id.clone())),
+				    Box::new((*ptr).desugar_idops())
+				)
+			    )
+			)
+		    },
+		    IdopOne::DivBy =>
+		    {
+			Expression::IdopOne(
+			    IdopOne::Assign,
+			    id.clone(),
+			    Box::new(
+				Expression::Binary(
+				    Binop::Div,
+				    Box::new(Expression::Identifier(id.clone())),
+				    Box::new((*ptr).desugar_idops())
+				)
+			    )
+			)
+		    },
+		    IdopOne::ModBy =>
+		    {
+			Expression::IdopOne(
+			    IdopOne::Assign,
+			    id.clone(),
+			    Box::new(
+				Expression::Binary(
+				    Binop::Modulo,
+				    Box::new(Expression::Identifier(id.clone())),
+				    Box::new((*ptr).desugar_idops())
+				)
+			    )
+			)
+		    },
+		    IdopOne::AndBy =>
+		    {
+			Expression::IdopOne(
+			    IdopOne::Assign,
+			    id.clone(),
+			    Box::new(
+				Expression::Binary(
+				    Binop::BitAnd,
+				    Box::new(Expression::Identifier(id.clone())),
+				    Box::new((*ptr).desugar_idops())
+				)
+			    )
+			)
+		    },
+		    IdopOne::XorBy =>
+		    {
+			Expression::IdopOne(
+			    IdopOne::Assign,
+			    id.clone(),
+			    Box::new(
+				Expression::Binary(
+				    Binop::Xor,
+				    Box::new(Expression::Identifier(id.clone())),
+				    Box::new((*ptr).desugar_idops())
+				)
+			    )
+			)
+		    },
+		    IdopOne::OrBy =>
+		    {
+			Expression::IdopOne(
+			    IdopOne::Assign,
+			    id.clone(),
+			    Box::new(
+				Expression::Binary(
+				    Binop::BitOr,
+				    Box::new(Expression::Identifier(id.clone())),
+				    Box::new((*ptr).desugar_idops())
+				)
+			    )
+			)
+		    }
+		}
+	    },
 	    other =>
 	    {
 		let lambda =
-		    |expr: &Expression| expr.desugar_increments();
+		    |expr: &Expression| expr.desugar_idops();
 		other.propagate(&lambda)
 	    }
 	}    

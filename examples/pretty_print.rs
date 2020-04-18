@@ -45,12 +45,10 @@ fn test_identif(s: &str)
 
 fn main()
 {
-    seq("--1");
-    seq("++1");
-    seq("1--");
-    seq("1++");
-    seq("--1");
-    seq("++1");
+    seq("--i");
+    seq("++i");
+    seq("i--");
+    seq("i++");
     seq("-1");
     seq("+1");
     seq("!1");
@@ -103,26 +101,6 @@ end
     println!();
     
     
-    if false
-    {
-	println!("RANDOM_TEST");
-	let rand_expr = *Expression::random(2);
-	println!("{}\n", rand_expr);
-	let pretty_printed = format!("{}", rand_expr);
-	println!("{}\n", pretty_printed);
-	let parsed = *parser::ExprParser::new().parse(pretty_printed.as_str()).unwrap();
-	println!("{}\n", parsed);
-	let same = rand_expr == parsed;
-	println!("MATCH = {}", same);
-	if !same
-	{
-	    println!("ORIGINAL:\n {:?}", rand_expr);
-	    println!("PARSED  :\nq {:?}", parsed);
-	    
-	}
-	println!();
-	type_inference(pretty_printed.as_str());
-    }
 
     let lol = r#"
 let var iA_b4:= 3
@@ -205,6 +183,51 @@ end
     run("let var i:= 1 in print(++i); print(i) end");
     run("let var i:= 1 in print(i--); print(i) end");
     run("let var i:= 1 in print(--i); print(i) end");
+
+    run("let var i:= 3 in print(i+=2); print(i) end");
+    run(r#"let var i:= "aaa" in print(i+="b"); print(i) end"#);
+    run("let var i:= 3 in print(i-=2); print(i) end");
+    run("let var i:= 3 in print(i*=2); print(i) end");
+    run("let var i:= 3 in print(i/=2); print(i) end");
+    run("let var i:= 3 in print(i%=2); print(i) end");
+    run("let var i:= 3 in print(i&=2); print(i) end");
+    run("let var i:= 3 in print(i^=2); print(i) end");
+    run("let var i:= 3 in print(i|=2); print(i) end");
+
+    let mut matched = true;
+    if true
+    {
+	println!("\n\n\nRANDOM_TEST");
+	let rand_expr = *Expression::random(2);
+	println!("{}\n", rand_expr);
+	let pretty_printed = format!("{}", rand_expr);
+	println!("{}\n", pretty_printed);
+	let parsed = *parser::ExprParser::new().parse(pretty_printed.as_str()).unwrap();
+	println!("{}\n", parsed);
+	let same = rand_expr == parsed;
+	matched = same;
+	println!("MATCH = {}", same);
+	if !same
+	{
+	    println!("ORIGINAL:\n {:?}", rand_expr);
+	    println!("PARSED  :\nq {:?}", parsed);
+	    
+	}
+	println!();
+	type_inference(pretty_printed.as_str());
+    }
+
+    run("
+let var n:= 10
+    var fact := 1
+in
+  for i := 1 to n+1 do
+    fact *= i;
+  print(fact)
+end
+");
+    run("1 + if true then 3 else 4");
+
 }
 
 

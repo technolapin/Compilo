@@ -52,7 +52,7 @@ impl Seq
     pub fn desugar(&self) -> Self
     {
 	Self(
-	    self.0.iter().map(|expr| expr.desugar_for().desugar_increments()).collect()
+	    self.0.iter().map(|expr| expr.desugar_for().desugar_idops()).collect()
 	)
     }
     pub fn reduce(&self, context: &mut Context) -> Terminal

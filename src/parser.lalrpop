@@ -273,7 +273,8 @@ MinusExpr: Box<Expression> =
 }
 PlusExpr: Box<Expression> =
 {
-	"+" <a: Precedency3> => Box::new(Expression::Unary(Unop::Plus, a))
+	"+" <a: Precedency3> => Box::new(Expression::Unary(Unop::Plus, a)),
+//	"+" <a: IfExpr> => Box::new(Expression::Unary(Unop::Plus, a))
 }
 NotExpr: Box<Expression> =
 {
@@ -404,7 +405,15 @@ IdopExpr: Box<Expression> =
 }
 IdopOneExpr: Box<Expression> =
 {
-	<id: Identif> ":=" <e: Expr> => Box::new(Expression::IdopOne(IdopOne::Assign, id, e))
+	<id: Identif> ":=" <e: Expr> => Box::new(Expression::IdopOne(IdopOne::Assign, id, e)),
+	<id: Identif> "+=" <e: Expr> => Box::new(Expression::IdopOne(IdopOne::IncrBy, id, e)),
+	<id: Identif> "-=" <e: Expr> => Box::new(Expression::IdopOne(IdopOne::DecrBy, id, e)),
+	<id: Identif> "*=" <e: Expr> => Box::new(Expression::IdopOne(IdopOne::MulBy, id, e)),
+	<id: Identif> "/=" <e: Expr> => Box::new(Expression::IdopOne(IdopOne::DivBy, id, e)),
+	<id: Identif> "%=" <e: Expr> => Box::new(Expression::IdopOne(IdopOne::ModBy, id, e)),
+	<id: Identif> "&=" <e: Expr> => Box::new(Expression::IdopOne(IdopOne::AndBy, id, e)),
+	<id: Identif> "^=" <e: Expr> => Box::new(Expression::IdopOne(IdopOne::XorBy, id, e)),
+	<id: Identif> "|=" <e: Expr> => Box::new(Expression::IdopOne(IdopOne::OrBy, id, e)),
 
 }
 IdopNoneExpr: Box<Expression> =

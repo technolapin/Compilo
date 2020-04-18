@@ -7,11 +7,18 @@ impl fmt::Display for Seq
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result
     {
 	let n = self.0.len();
+
+	for expr in (0..n-1).map(|i| &self.0[i])
+	{
+	    write!(f, "{};\n", *expr)?
+	}
+	/*
 	self.0.get(0..(n.max(1)-1)).map(
 	    |elements|
 	    elements.iter().for_each(
 	    |expr| {write!(f, "{};\n", *expr);}
 	));
+*/
 	if let Some(last) = self.0.last()
 	{
 	    write!(f, "{}", last)
@@ -48,12 +55,7 @@ impl fmt::Display for Expression
 	{
 	    Expression::Unary(op, exp) =>
 	    {
-		match op
-		{
-		    Unop::Minus => write!(f, "(- {})", *exp),
-		    Unop::Plus => write!(f, "(+ {})", *exp),
-		    Unop::Not => write!(f, "(! {})", *exp),
-		}
+		write!(f, "({} {})", op, *exp)
 	    }
 	    Expression::Binary(op, exp_a, exp_b) =>
 	    {
@@ -84,28 +86,24 @@ impl fmt::Display for Expression
 	    {
 		write!(f, "{}({})", prim, *expr)
 	    },
-	    Expression::IdopOne(op, id, ptr) => match op
+	    Expression::IdopOne(op, id, ptr) =>
 	    {
-		IdopOne::Assign =>
-		{
-		    write!(f, "{} := {}", id, *ptr)
-		},
-		_ => unimplemented!()
+		write!(f, "({} {} {})", id, op, ptr)
 	    },
 	    Expression::IdopNone(op, id) => match op
 	    {
 		IdopNone::IncrPostfix | IdopNone::DecrPostfix =>
 		{
-		    write!(f, "{} {}", id, op)
+		    write!(f, "({} {})", id, op)
 		},
 		IdopNone::IncrPrefix | IdopNone::DecrPrefix =>
 		{
-		    write!(f, "{} {}", op, id)
+		    write!(f, "({} {})", op, id)
 		},
 	    },
 	    Expression::For(id, from, to, seq) =>
 	    {
-		write!(f, "for {} := {} to {} do\n {}",
+		write!(f, "(for {} := {} to {} do\n {})",
 		       id,
 		       *from,
 		       *to,
@@ -114,7 +112,7 @@ impl fmt::Display for Expression
 	    },
 	    Expression::While(expr, seq) =>
 	    {
-		write!(f, "while {} do\n{}",
+		write!(f, "(while {} do\n{})",
 		       *expr,
 		       seq
 		)
@@ -229,6 +227,26 @@ impl fmt::Display for IdopNone
 	    DecrPostfix => write!(f, "--"),
 	    DecrPrefix => write!(f, "--"),
 
+	}
+    }
+}
+
+impl fmt::Display for IdopOne
+{
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result
+    {
+	use IdopOne::*;
+	match self
+	{
+	    Assign => write!(f, ":="),
+	    IncrBy => write!(f, "+="),
+	    DecrBy => write!(f, "-="),
+	    MulBy => write!(f, "*="),
+	    DivBy => write!(f, "/="),
+	    ModBy => write!(f, "%="),
+	    AndBy => write!(f, "&="),
+	    XorBy => write!(f, "^="),
+	    OrBy => write!(f, "|=")
 	}
     }
 }
