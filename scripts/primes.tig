@@ -1,0 +1,23 @@
+print("Script trouvant des nombres premiers"),
+let
+  var n := 100
+  var is_prime := true
+in
+  for i := 2 to n do
+  (
+    is_prime := true,
+    for j := 2 to i do
+    	if i % j = 0
+	then
+	(
+	  is_prime := false
+	  )
+	else
+	  false,
+    if is_prime then
+      print(i)
+    else
+      nil
+	  
+  )
+end

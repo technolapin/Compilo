@@ -22,6 +22,7 @@ pub enum Expression
     Binary(Binop, Box<Expression>, Box<Expression>),
 
     If(Box<Expression>, Box<Expression>, Box<Expression>),
+    NilIf(Box<Expression>, Box<Expression>),
     Block(Seq),
     LetIn(VarsRegister, Seq),
     Primitive(Primitive, Box<Expression>),
@@ -145,7 +146,7 @@ impl Expression
 			}
 			else
 			{
-			    Err(format!("{} cannot be applied to {} and {}", binop, a, b))
+			    Err(format!("{} cannot be applied to {} and {}", binop, t_a, t_b))
 			}
 		    },
 		    Binop::And | Binop::Or =>
@@ -177,6 +178,17 @@ impl Expression
 		}
 		
 	    },
+	    Self::NilIf(cond, sa) =>
+	    {
+		let t_cond = (*cond).infer_type(binder)?;
+		if t_cond != Type::Bool
+		{
+		    return Err(format!("Expected a boolean expression, found {}", t_cond));
+		};
+		let _ = sa.infer_type(binder)?;
+		Ok(Type::Nil)
+	    },
+	    
 	    Self::Block(seq) => seq.infer_type(binder),
 	    Self::LetIn(reg, seq) =>
 	    {
@@ -185,10 +197,15 @@ impl Expression
 		binder.pop();
 		tmp
 	    },
-	    Self::Primitive(_, exp) =>
+	    Self::Primitive(prim, exp) =>
 	    {
-		exp.infer_type(binder)?;
-		Ok(Type::Nil)
+		let typ = exp.infer_type(binder)?;
+		match (prim, typ)
+		{
+		    (Primitive::Print, _) => Ok(Type::Nil),
+		    (Primitive::Random, Type::Int) => Ok(Type::Int),
+		    (prim, typ) => Err(format!("Primitive {} cannot be applied to type {}", prim, typ))
+		}
 	    },
 
 //	    Self::Binding(ptr) => (*ptr).infer_type(),
@@ -342,15 +359,14 @@ impl Expression
 	    Self::If(ptr, seq_a, seq_b) =>
 	    {
 		let cond = (*ptr).reduce(context);
-		let a = seq_a.reduce(context);
-		let b = seq_b.reduce(context);
 		match cond
 		{
-		    Terminal::Bool(cond) => if cond {a} else {b},
+		    Terminal::Bool(cond) => if cond {seq_a.reduce(context)} else {seq_b.reduce(context)},
 		    _ => unimplemented!()
 		    
 		}
 	    },
+	    Self::NilIf(_,_) => unimplemented!(),
 	    Self::Block(seq) =>
 	    {
 		seq.reduce(context)
@@ -364,13 +380,18 @@ impl Expression
 	    },
 	    Self::Primitive(prim, ptr) =>
 	    {
-		match prim
+		match (prim, (*ptr).reduce(context))
 		{
-		    Primitive::Print =>
+		    (Primitive::Print, val) =>
 		    {
-			println!("{}", (*ptr).reduce(context));
+			println!("{}", val);
 			Terminal::Nil
-		    }
+		    },
+		    (Primitive::Random, Terminal::Int(n)) =>
+		    {
+			Terminal::Int(rand::random::<i64>().abs() % n)
+		    },
+		    (_, _) => unimplemented!()
 		}
 	    },
 	    Self::IdopOne(op, id, expr) =>
@@ -705,7 +726,31 @@ impl Expression
 		    |expr: &Expression| expr.desugar_idops();
 		other.propagate(&lambda)
 	    }
-	}    
+	}
+    }
+    pub fn desugar_nil_if(&self) -> Self
+    {
+	match self
+	{
+	    Self::NilIf(cond, expr) =>
+	    {
+		let nil = Expression::Terminal(Terminal::Nil);
+		let body = Box::new(
+		    Expression::Block(
+			Seq::new((**expr).clone())
+			    .pushed(nil.clone())
+			    
+		    )
+		);
+		Self::If(cond.clone(), body, Box::new(nil))
+	    },
+	    other =>
+	    {
+		let lambda =
+		    |expr: &Expression| expr.desugar_nil_if();
+		other.propagate(&lambda)
+	    }
+	}
     }
 
     pub fn propagate<F>(&self, lambda: &F) -> Self

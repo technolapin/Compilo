@@ -118,7 +118,8 @@ impl VarsRegister
 #[derive(Debug, PartialEq, Clone)]
 pub enum Primitive
 {
-    Print
+    Print,
+    Random
 }
 
 impl Primitive

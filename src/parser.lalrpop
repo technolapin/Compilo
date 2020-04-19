@@ -21,6 +21,7 @@ PrimitiveExpr: Box<Expression> =
 PrimitiveToken: Primitive =
 {
 	"print" => Primitive::Print,
+	"random" => Primitive::Random,
 }
 
 pub Seq: Seq =
@@ -72,7 +73,7 @@ pub Identif: Identifier =
 
 // only recognize positive numbers
 // negatives ones will be recognised as a positive and a unary -
-Int: i32 = <s:r"[0-9]+"> => u32::from_str(s).unwrap() as i32;
+Int: i64 = <s:r"[0-9]+"> => u32::from_str(s).unwrap() as i64;
 Nil: () = "nil" => ();
 Bool: bool =
 {
@@ -384,10 +385,10 @@ OrExpr: Box<Expression> =
 // 15
 pub IfExpr: Box<Expression> =
 {
-	"if" <cond: Expr> "then" <exp1: Expr> "else" <exp2: Expr> =>
-  	     Box::new(Expression::If(cond, exp1, exp2)),
+	"if" <cond: Expr> "then" <exp1: Expr> "else" <exp2: Expr> => Box::new(Expression::If(cond, exp1, exp2))		
 
 }
+
 LetInExpr: Box<Expression> =
 {
 	"let" <maybe_vars: DeclList?> "in" <e: Seq> "end" =>

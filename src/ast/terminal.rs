@@ -3,7 +3,7 @@ use super::Type;
 #[derive(Debug, PartialEq, Clone)]
 pub enum Terminal
 {
-    Int(i32),
+    Int(i64),
     String(String),
     Nil,
     Bool(bool),
@@ -21,7 +21,7 @@ impl Terminal
 	use rand::distributions::Alphanumeric;
 	match rand::random::<u32>() % 4
 	{
-	    0 => Terminal::Int(rand::random::<i32>().abs()),
+	    0 => Terminal::Int(rand::random::<i64>().abs()),
 	    1 => {
 		Terminal::String(thread_rng()
 				 .sample_iter(&Alphanumeric)

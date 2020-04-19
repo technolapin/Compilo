@@ -197,8 +197,10 @@ end");
 
     run("let in 1 + 1 end");
 
-    run("(for i := 1 to 2 do i, print(i))");
-    
+
+
+    run("if true then print(1)");
+
 }
 
 

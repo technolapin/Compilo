@@ -1,0 +1,22 @@
+print("Script donnant une valeur approchée de pi"),
+let
+  var n := 100000
+  var inside := 0
+  var x := 0
+  var y := 0
+  var size := 1000000
+  var size2 := size*size
+in
+  for iteration := 0 to n do
+  (
+    x := random(size),
+    y := random(size),
+
+    if (x*x+y*y) <= size2
+    then
+      inside++
+    else
+      0
+  ),
+  print(inside*4)
+end

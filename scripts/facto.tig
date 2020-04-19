@@ -1,0 +1,9 @@
+print("Script calculant des factorielles"),
+for n := 1 to 10 do
+  let
+      var fact := 1
+  in
+    for i := 2 to n+1 do
+      fact *= i,
+    print(fact)
+  end

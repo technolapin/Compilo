@@ -60,6 +60,10 @@ impl fmt::Display for Expression
 	    {
 		write!(f, "if {} then {} else {}", *cond, seq_a, seq_b)
 	    },
+	    Expression::NilIf(cond, seq_a) =>
+	    {
+		write!(f, "if {} then {}", *cond, seq_a)
+	    },
 	    Expression::Terminal(term) =>
 	    {
 		write!(f, "{}", term)
@@ -138,7 +142,8 @@ impl fmt::Display for Primitive
     {
 	match self
 	{
-	    Self::Print => write!(f, "print")
+	    Self::Print => write!(f, "print"),
+	    Self::Random => write!(f, "random")
 	}
     }
 }
