@@ -22,20 +22,40 @@ mod tests {
 	use crate::parser;
 	fn run(s: &str, expected: Terminal)
 	{
+	    println!("============================");
+	    println!("{}", s);
+	    println!("- - - - - - - - - - - - - - ");
 	    let parser = parser::SeqParser::new();
-	    let seq = parser.parse(s).unwrap();
-	    if let Err(err) = seq.check()
+	    let maybe = parser.parse(s);
+	    print!("PARSING: ");
+	    let seq = match maybe
 	    {
-		panic!(format!("{:?}\n{}", err, s))
-	    }
-	    assert!(seq.run() == Ok(expected));
+		Err(err) => {println!("ERROR ({})", err); panic!("FAILED TO PARSE")}
+		Ok(seq) => {println!("DONE"); seq}
+	    };
+	    print!("BINDING/TYPE CHECKING: ");
+	    match seq.check()
+	    {
+		Err(err) => {
+		    println!("ERROR ({})", err);
+		    panic!(format!("{:?}\n{}", err, s))
+		},
+		Ok(typ) => println!("DONE (infered {} )", typ)
+	    };
+	    println!("STANDARD OUTPUT:");
+	    let res = seq.run();
+	    println!("OUTPUT: {:?}", res.clone());
+	    assert!(res.clone() == Ok(expected));
 	}
 	
-	fn wrong_type(s: &str)
+	fn wrong(s: &str)
 	{
 	    let parser = parser::SeqParser::new();
-	    let seq = parser.parse(s).unwrap();
-	    assert!(seq.check().is_err());
+	    match parser.parse(s)
+	    {
+		Err(err) => (),
+		Ok(seq) => assert!(seq.check().is_err())
+	    }
 	}
 	use Terminal::*;
 
@@ -116,10 +136,10 @@ end
 ", Int(720));
 	run(r#"(1, 2, 3, true, false, "abzaraz", 5)"#, Int(5));
 
-	wrong_type(r#"1+true"#);
-	wrong_type(r#"if 1 then 0 else 0"#);
-	wrong_type(r#"if true then 0 else "int""#);
-	wrong_type(r#"1="1""#);
+	wrong(r#"1+true"#);
+	wrong(r#"if 1 then 0 else 0"#);
+	wrong(r#"if true then 0 else "int""#);
+	wrong(r#"1="1""#);
 
 	run(
 "let
@@ -130,10 +150,42 @@ in
   foo, bar * baz
 end",
 	    Int(8)
-	)
-    }
+	);
+	run("let in 1 + 1 end", Int(2));
 
-    
+	run("let var i := 1 in print(i) end", Nil);
+	run("
+let var i := 10
+in
+  print(i),
+  let var i := i * i
+  in
+    print(i)
+  end,
+  print(i)
+end",
+	    Nil
+	);
+	wrong("let var foo in end");
+
+	run("
+let var i := 1
+in
+  while i < 5 do
+    (print(i), i := i + 1)
+end
+", Nil);
+	run("
+let var i := 1
+in
+  for i := 2 to 3 do print(i),
+  print(i)
+end", Nil);
+	run("
+for i := 2 to 1 do print(i)
+", Nil);
+	wrong("(for i := 1 to 2 do i, print(i))");
+    }
     
 }
 

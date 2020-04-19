@@ -390,8 +390,12 @@ pub IfExpr: Box<Expression> =
 }
 LetInExpr: Box<Expression> =
 {
-	"let" <vars: DeclList> "in" <e: Seq> "end" =>
-  	     Box::new(Expression::LetIn(vars, e)),
+	"let" <maybe_vars: DeclList?> "in" <e: Seq> "end" =>
+	match maybe_vars
+	{
+  	     Some(vars) => Box::new(Expression::LetIn(vars, e)),
+	     None => Box::new(Expression::LetIn(VarsRegister::new(), e))
+	}
 
 }
 

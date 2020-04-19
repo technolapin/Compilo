@@ -185,7 +185,11 @@ impl Expression
 		binder.pop();
 		tmp
 	    },
-	    Self::Primitive(_, _) => Ok(Type::Nil),
+	    Self::Primitive(_, exp) =>
+	    {
+		exp.infer_type(binder)?;
+		Ok(Type::Nil)
+	    },
 
 //	    Self::Binding(ptr) => (*ptr).infer_type(),
 	    Self::IdopOne(op, id, ptr) =>
@@ -247,7 +251,7 @@ impl Expression
 		    Ok(Type::Nil)
 		}
 	    },
-	    Self::For(id, from, to, seq) =>
+	    Self::For(id, from, to, exp) =>
 	    {
 		let t_from = from.infer_type(binder)?;
 		let t_to = to.infer_type(binder)?;
@@ -268,7 +272,7 @@ impl Expression
 				Expression::Terminal(Terminal::Int(0))
 			    )
 		    )?;
-		let _ = seq.infer_type(binder)?;
+		let _ = exp.infer_type(binder)?;
 		binder.pop();
 		Ok(Type::Nil)
 	    },
@@ -852,7 +856,7 @@ impl Context
 }
 
 
-
+#[derive(Debug)]
 pub struct Binder
 {
     scopes: Vec<HashMap<Identifier, Type>>,

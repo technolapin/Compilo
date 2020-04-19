@@ -162,7 +162,7 @@ end
     let seq = parser.parse(s).unwrap();
 
     
-    let mut matched = true;
+    let mut matched = false;
     while matched
     {
 	println!("\n\n\nRANDOM_TEST");
@@ -194,6 +194,11 @@ run("let
 in
   foo, bar * baz
 end");    
+
+    run("let in 1 + 1 end");
+
+    run("(for i := 1 to 2 do i, print(i))");
+    
 }
 
 
