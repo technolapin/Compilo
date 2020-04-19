@@ -10,15 +10,9 @@ impl fmt::Display for Seq
 
 	for expr in (0..n-1).map(|i| &self.0[i])
 	{
-	    write!(f, "{};\n", *expr)?
+	    write!(f, "{},\n", *expr)?
 	}
-	/*
-	self.0.get(0..(n.max(1)-1)).map(
-	    |elements|
-	    elements.iter().for_each(
-	    |expr| {write!(f, "{};\n", *expr);}
-	));
-*/
+	
 	if let Some(last) = self.0.last()
 	{
 	    write!(f, "{}", last)
@@ -55,16 +49,16 @@ impl fmt::Display for Expression
 	{
 	    Expression::Unary(op, exp) =>
 	    {
-		write!(f, "({} {})", op, *exp)
+		write!(f, "{} {}", op, *exp)
 	    }
 	    Expression::Binary(op, exp_a, exp_b) =>
 	    {
-		write!(f, "({} {} {})", *exp_a, op, *exp_b)
+		write!(f, "{} {} {}", *exp_a, op, *exp_b)
 	    }
 	    
 	    Expression::If(cond, seq_a, seq_b) =>
 	    {
-		write!(f, "(if {} then {} else {})", *cond, seq_a, seq_b)
+		write!(f, "if {} then {} else {}", *cond, seq_a, seq_b)
 	    },
 	    Expression::Terminal(term) =>
 	    {
@@ -72,11 +66,11 @@ impl fmt::Display for Expression
 	    },
 	    Expression::Block(seq) =>
 	    {
-		write!(f, "{{ {} }}", seq)
+		write!(f, "( {} )", seq)
 	    },
 	    Expression::LetIn(var_register, boxed_expr) =>
 	    {
-		write!(f, "(let {} in {} end)", var_register, boxed_expr)
+		write!(f, "let {} in {} end", var_register, boxed_expr)
 	    }
 	    Expression::Identifier(identifier) =>
 	    {
@@ -88,22 +82,22 @@ impl fmt::Display for Expression
 	    },
 	    Expression::IdopOne(op, id, ptr) =>
 	    {
-		write!(f, "({} {} {})", id, op, ptr)
+		write!(f, "{} {} {}", id, op, ptr)
 	    },
 	    Expression::IdopNone(op, id) => match op
 	    {
 		IdopNone::IncrPostfix | IdopNone::DecrPostfix =>
 		{
-		    write!(f, "({} {})", id, op)
+		    write!(f, "{} {}", id, op)
 		},
 		IdopNone::IncrPrefix | IdopNone::DecrPrefix =>
 		{
-		    write!(f, "({} {})", op, id)
+		    write!(f, "{} {}", op, id)
 		},
 	    },
 	    Expression::For(id, from, to, seq) =>
 	    {
-		write!(f, "(for {} := {} to {} do\n {})",
+		write!(f, "for {} := {} to {} do\n {}",
 		       id,
 		       *from,
 		       *to,
@@ -112,7 +106,7 @@ impl fmt::Display for Expression
 	    },
 	    Expression::While(expr, seq) =>
 	    {
-		write!(f, "(while {} do\n{})",
+		write!(f, "while {} do\n{}",
 		       *expr,
 		       seq
 		)
@@ -195,6 +189,8 @@ impl fmt::Display for Binop
 	    BitOr => write!(f, "|"),
 	    And => write!(f, "&&"),
 	    Or => write!(f, "||"),
+	    LShift => write!(f, "<<"),
+	    RShift => write!(f, ">>"),
 	}
     }
 }
@@ -209,6 +205,7 @@ impl fmt::Display for Unop
 	    Plus => write!(f, "+"),
 	    Minus => write!(f, "-"),
 	    Not => write!(f, "!"),
+	    BitNot => write!(f, "~"),
 
 	}
     }
@@ -246,7 +243,9 @@ impl fmt::Display for IdopOne
 	    ModBy => write!(f, "%="),
 	    AndBy => write!(f, "&="),
 	    XorBy => write!(f, "^="),
-	    OrBy => write!(f, "|=")
+	    OrBy => write!(f, "|="),
+	    LShiftBy => write!(f, "<<="),
+	    RShiftBy => write!(f, ">>="),
 	}
     }
 }

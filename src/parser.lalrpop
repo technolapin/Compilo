@@ -4,7 +4,7 @@ use crate::ast::*;
 grammar;
 
 
-StatDelimiter = ";";
+StatDelimiter = ",";
 
 /////////////////////////
 // Primitives ///////////
@@ -39,8 +39,8 @@ pub Seq: Seq =
 
 SeqBlock: Box<Expression> =
 {
-	"{" <seq: Seq> "}" => Box::new(Expression::Block(seq)),
-	"{" "}" => Box::new(Expression::Block(Seq::new(Expression::Terminal(Terminal::Nil))))
+	"(" <seq: Seq> ")" => Box::new(Expression::Block(seq)),
+	"(" ")" => Box::new(Expression::Block(Seq::new(Expression::Terminal(Terminal::Nil))))
 }
 
 
@@ -91,7 +91,6 @@ Precedency0: Box<Expression> =
 {
 	LiteralExpr,
 	IdentifierExpr,
-	ParenthesisExpr,
 	PrimitiveExpr,
 	SeqBlock,
 }
@@ -104,8 +103,8 @@ Precedency1: Box<Expression> =
 Precedency2: Box<Expression> =
 {
 	Precedency1,
-//	SufixIncrementExpr,
-//	SufixDecrementExpr
+	SufixIncrementExpr,
+	SufixDecrementExpr
 }
 
 // moins unaire, not
@@ -115,14 +114,14 @@ Precedency3: Box<Expression> =
 	MinusExpr,
 	PlusExpr,
 	NotExpr,
-//	PrefixIncrementExpr,
-//	PrefixDecrementExpr
+	BitNotExpr,
+	PrefixIncrementExpr,
+	PrefixDecrementExpr
 }
 
 Precedency4: Box<Expression> =
 {
 	Precedency3
-
 }
 
 Precedency5: Box<Expression> =
@@ -143,8 +142,9 @@ Precedency6: Box<Expression> =
 
 Precedency7: Box<Expression> =
 {
-	Precedency6
-
+	Precedency6,
+	LShiftExpr,
+	RShiftExpr,
 }
 
 // DONE
@@ -242,31 +242,28 @@ IdentifierExpr: Box<Expression> =
 }
 
 
-ParenthesisExpr: Box<Expression> =
+// 1
+// 2
+SufixDecrementExpr: Box<Expression> =
 {
-	"(" <e: Expr> ")" => e
+	<id: Identif> "--" => Box::new(Expression::IdopNone(IdopNone::DecrPostfix, id,)),
+}
+
+SufixIncrementExpr: Box<Expression> =
+{
+ 	<id: Identif> "++" => Box::new(Expression::IdopNone(IdopNone::IncrPostfix, id,)),
 }
 
 
-// 1
-// 2
-// SufixDecrementExpr: Box<Expression> =
-// {
-// 	<a: Precedency2> "--" => Box::new(Expression::Unary(Unop::Decrement, a))
-// }
-// SufixIncrementExpr: Box<Expression> =
-// {
-// 	<a: Precedency2> "++" => Box::new(Expression::Unary(Unop::Increment, a))
-// }
-// // 3
-// PrefixDecrementExpr: Box<Expression> =
-// {
-// 	"--" <a: Precedency3> => Box::new(Expression::Unary(Unop::Decrement, a))
-// }
-// PrefixIncrementExpr: Box<Expression> =
-// {
-// 	"++" <a: Precedency3> => Box::new(Expression::Unary(Unop::Increment, a))
-// }
+// 3
+PrefixDecrementExpr: Box<Expression> =
+{
+	"--" <id: Identif> => Box::new(Expression::IdopNone(IdopNone::DecrPrefix, id,)),
+}
+PrefixIncrementExpr: Box<Expression> =
+{
+	"++" <id: Identif> => Box::new(Expression::IdopNone(IdopNone::IncrPrefix, id,)),
+}
 MinusExpr: Box<Expression> =
 {
 	<start:@L> "-" <a: Precedency3> <end:@R> => Box::new(Expression::Unary(Unop::Minus, a))
@@ -274,11 +271,14 @@ MinusExpr: Box<Expression> =
 PlusExpr: Box<Expression> =
 {
 	"+" <a: Precedency3> => Box::new(Expression::Unary(Unop::Plus, a)),
-//	"+" <a: IfExpr> => Box::new(Expression::Unary(Unop::Plus, a))
 }
 NotExpr: Box<Expression> =
 {
 	"!" <a: Precedency3> => Box::new(Expression::Unary(Unop::Not, a))
+}
+BitNotExpr: Box<Expression> =
+{
+	"~" <a: Precedency3> => Box::new(Expression::Unary(Unop::BitNot, a))
 }
 
 // 4
@@ -312,6 +312,16 @@ SubExpr: Box<Expression> =
 {
 	<a: Precedency6> "-" <b: Precedency5> => Box::new(Expression::Binary(Binop::Sub, a, b))
 
+}
+
+//7
+LShiftExpr: Box<Expression> =
+{
+	<a: Precedency7> "<<" <b: Precedency6> => Box::new(Expression::Binary(Binop::LShift, a, b))
+}
+RShiftExpr: Box<Expression> =
+{
+	<a: Precedency7> ">>" <b: Precedency6> => Box::new(Expression::Binary(Binop::RShift, a, b))
 }
 
 //8
@@ -401,7 +411,6 @@ DeclList: VarsRegister =
 IdopExpr: Box<Expression> =
 {
 	IdopOneExpr,
-	IdopNoneExpr
 }
 IdopOneExpr: Box<Expression> =
 {
@@ -414,14 +423,8 @@ IdopOneExpr: Box<Expression> =
 	<id: Identif> "&=" <e: Expr> => Box::new(Expression::IdopOne(IdopOne::AndBy, id, e)),
 	<id: Identif> "^=" <e: Expr> => Box::new(Expression::IdopOne(IdopOne::XorBy, id, e)),
 	<id: Identif> "|=" <e: Expr> => Box::new(Expression::IdopOne(IdopOne::OrBy, id, e)),
-
-}
-IdopNoneExpr: Box<Expression> =
-{
-	<id: Identif> "++" => Box::new(Expression::IdopNone(IdopNone::IncrPostfix, id,)),
-	"++" <id: Identif> => Box::new(Expression::IdopNone(IdopNone::IncrPrefix, id,)),
-	<id: Identif> "--" => Box::new(Expression::IdopNone(IdopNone::DecrPostfix, id,)),
-	"--" <id: Identif> => Box::new(Expression::IdopNone(IdopNone::DecrPrefix, id,)),
+	<id: Identif> "<<=" <e: Expr> => Box::new(Expression::IdopOne(IdopOne::LShiftBy, id, e)),
+	<id: Identif> ">>=" <e: Expr> => Box::new(Expression::IdopOne(IdopOne::RShiftBy, id, e)),
 
 }
 

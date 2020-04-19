@@ -42,6 +42,12 @@ impl Seq
 	oks.last().expect("EMPTY SEQ NOT SUPPORTED").clone()
     }
 
+    /// Bind and typecheck
+    pub fn check(&self) -> Result<Type, String>
+    {
+	self.infer_type(&mut Binder::new())
+    }
+    
     pub fn merge(&self, other: &Self) -> Self
     {
 	let mut new = self.0.clone();
@@ -70,4 +76,12 @@ impl Seq
 		.collect::<Vec<Expression>>()
 	)
     }
+
+    pub fn run(&self) -> Result<Terminal, String>
+    {
+	self.infer_type(&mut Binder::new())?;
+	let desugar = self.desugar();
+	Ok(desugar.reduce(&mut Context::new()))
+    }
+    
 }

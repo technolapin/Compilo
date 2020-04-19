@@ -4,6 +4,7 @@ pub enum Unop
     Minus,
     Plus,
     Not,
+    BitNot,
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -25,6 +26,8 @@ pub enum Binop
     BitOr,
     And,
     Or,
+    LShift,
+    RShift,
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -38,7 +41,9 @@ pub enum IdopOne
     ModBy,
     AndBy,
     XorBy,
-    OrBy
+    OrBy,
+    LShiftBy,
+    RShiftBy,
 }
 #[derive(Debug, PartialEq, Clone)]
 pub enum IdopNone
@@ -54,11 +59,12 @@ impl Unop
 {
     pub fn random() -> Self
     {
-	match rand::random::<u32>() % 2
+	match rand::random::<u32>() % 4
 	{
 	    0 => Self::Minus,
-	    1 => Self::Not,
-	    _ => {println!("UN UNREACH"); unreachable!()}
+	    1 => Self::Plus,
+	    2 => Self::Not,
+	    _ => Self::BitNot,
 	}
     }
 }
@@ -66,7 +72,7 @@ impl Binop
 {
     pub fn random() -> Self
     {
-	match rand::random::<u32>() % 15
+	match rand::random::<u32>() % 17
 	{
 	    0 => Self::Add,
 	    1 => Self::Sub,
@@ -83,7 +89,8 @@ impl Binop
 	    12 => Self::BitOr,
 	    13 => Self::And,
 	    14 => Self::Or,
-	    i => {println!("BIN UNREACH {}", i); unreachable!()}
+	    15 => Self::LShift,
+	    _ => Self::RShift,
 	    
 	}
     }
@@ -94,7 +101,7 @@ impl IdopOne
     pub fn random() -> Self
     {
 	use IdopOne::*;
-	match rand::random::<u32>() % 9
+	match rand::random::<u32>() % 11
 	{
 	    0 => IncrBy,
 	    1 => DecrBy,
@@ -104,6 +111,8 @@ impl IdopOne
 	    5 => AndBy,
 	    6 => XorBy,
 	    7 => OrBy,
+	    8 => LShiftBy,
+	    9 => RShiftBy,
 	    _ => Assign,
 	}
     }

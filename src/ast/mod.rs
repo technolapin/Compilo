@@ -38,12 +38,12 @@ impl Identifier
 
 use std::collections::HashMap;
 #[derive(Debug, PartialEq, Clone)]
-pub struct VarsRegister(HashMap<Identifier, Expression>);
+pub struct VarsRegister(Vec<(Identifier, Expression)>);
 impl VarsRegister
 {
     pub fn new() -> Self
     {
-	Self(HashMap::new())
+	Self(vec![])
     }
     pub fn with_first(key: Identifier, val: Expression) -> Self
     {
@@ -51,8 +51,8 @@ impl VarsRegister
     }
     pub fn with_added(self, key: Identifier, val: Expression) -> Self
     {
-	let mut hashmap = self.0;
-	hashmap.insert(key, val);
+	let mut vec = self.0;
+	vec.push((key, val));
 	Self(hashmap)
     }
     pub fn merged(&self, other: &Self) -> Self
