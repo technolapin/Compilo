@@ -147,7 +147,7 @@ impl fmt::Display for VarsRegister
 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result
     {
-	let s = self.0.iter()
+	let s = self.get_vec().iter()
 	    .fold(String::new(), |s, (identifier, expr)|
 		  {
 		      format!("{} var {} := {}\n", s, identifier, expr)

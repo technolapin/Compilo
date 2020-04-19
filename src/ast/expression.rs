@@ -783,14 +783,14 @@ impl Context
 
     pub fn push(&mut self, register: &VarsRegister)
     {
-	let scope = register.iter()
+	let scope = register.get_vec().iter()
 	    .map(|(id, expr)| {
 		let val = Arc::new(expr.clone().reduce(self));
 		match self.current.get_mut(id)
 		{
 		    None =>
 		    {
-			self.current.insert(id.clone(), vec![val.clone()]);
+			self.current.insert((*id).clone(), vec![val.clone()]);
 		    },
 		    Some(vec) =>
 		    {
@@ -798,7 +798,7 @@ impl Context
 		    }
 
 		};
-		(id.clone(), val)
+		((*id).clone(), val)
 	    })
 	    .collect::<HashMap<Identifier, Arc<Terminal>>>();
 	self.scopes.push(scope);
@@ -875,15 +875,15 @@ impl Binder
 
 	let mut scope = HashMap::new();
 
-	for (id, expr) in register.iter()
+	for (id, expr) in register.get_vec().iter()
 	{
 	    let typ = expr.infer_type(self)?;
-	    scope.insert(id.clone(), typ.clone());
+	    scope.insert((*id).clone(), typ.clone());
 	    match self.current.get_mut(&id)
 	    {
 		None =>
 		{
-		    self.current.insert(id.clone(), vec![typ.clone()]);
+		    self.current.insert((*id).clone(), vec![typ.clone()]);
 		},
 		Some(vec) =>
 		{

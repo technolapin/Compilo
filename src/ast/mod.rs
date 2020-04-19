@@ -38,12 +38,12 @@ impl Identifier
 
 use std::collections::HashMap;
 #[derive(Debug, PartialEq, Clone)]
-pub struct VarsRegister(Vec<(Identifier, Expression)>);
+pub struct VarsRegister(HashMap<Identifier, Expression>, Vec<Identifier>);
 impl VarsRegister
 {
     pub fn new() -> Self
     {
-	Self(vec![])
+	Self(HashMap::new(), Vec::new())
     }
     pub fn with_first(key: Identifier, val: Expression) -> Self
     {
@@ -51,18 +51,29 @@ impl VarsRegister
     }
     pub fn with_added(self, key: Identifier, val: Expression) -> Self
     {
-	let mut vec = self.0;
-	vec.push((key, val));
-	Self(hashmap)
+	let mut hashmap = self.0;
+	let mut vec = self.1;
+	hashmap.insert(key.clone(), val);
+	vec.push(key);
+	Self(hashmap, vec)
     }
+    /*
     pub fn merged(&self, other: &Self) -> Self
     {
 	let mut hashmap = self.0.clone();
-	other.0.iter()
-	    .for_each(|(k, v)| {hashmap.insert(k.clone(), v.clone());});
+	other.iter()
+	    .for_each(|(k, v)| {
+		if hashmap.insert(
+		    k.clone(),
+		    v.clone()
+		) == None
+		{
+		    self.push()
+		};
+	    });
 	Self(hashmap)
     }
-
+*/
     /*
     pub fn get_binding(&self, id: &Identifier, scope: &Self) -> Result<Expression, String>
     {
@@ -85,9 +96,9 @@ impl VarsRegister
 	    )
     }
 
-    pub fn iter(&self) -> std::collections::hash_map::Iter<Identifier, Expression>
+    pub fn get_vec(&self) -> Vec<(Identifier, Expression)>
     {
-	self.0.iter()
+	self.1.iter().map(|key| (key.clone(), self.0.get(key).unwrap().clone())).collect()
     }
 
     pub fn propagate<F>(&self, lambda: &F) -> Self
@@ -96,7 +107,9 @@ impl VarsRegister
     {
 	Self(
 	    self.0.iter()
-		.map(|(id, expr)| (id.clone(), expr.propagate(lambda))).collect()
+		.map(|(id, expr)| (id.clone(), expr.propagate(lambda))).collect(),
+	    self.1.clone()
+		
 	)
     }    
 }

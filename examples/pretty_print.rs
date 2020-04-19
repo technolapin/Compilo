@@ -162,7 +162,7 @@ end
     let seq = parser.parse(s).unwrap();
 
     
-    let mut matched = false;
+    let mut matched = true;
     while matched
     {
 	println!("\n\n\nRANDOM_TEST");

@@ -6,7 +6,7 @@ mod tests {
     {
 	use crate::ast::Expression;
 	use crate::parser;
-	for _ in 0..10
+	for _ in 0..1000
 	{
 	    let rand_expr = *Expression::random(8);
 	    let pretty_printed = format!("{}", rand_expr);
