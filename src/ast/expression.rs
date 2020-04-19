@@ -203,7 +203,9 @@ impl Expression
 		match (prim, typ)
 		{
 		    (Primitive::Print, _) => Ok(Type::Nil),
+		    (Primitive::PrintLn, _) => Ok(Type::Nil),
 		    (Primitive::Random, Type::Int) => Ok(Type::Int),
+		    (Primitive::Random, Type::Nil) => Ok(Type::Int),
 		    (prim, typ) => Err(format!("Primitive {} cannot be applied to type {}", prim, typ))
 		}
 	    },
@@ -382,14 +384,33 @@ impl Expression
 	    {
 		match (prim, (*ptr).reduce(context))
 		{
+		    (Primitive::Print, Terminal::String(s)) =>
+		    {
+			print!("{}", s);
+			Terminal::Nil
+		    },
 		    (Primitive::Print, val) =>
+		    {
+			print!("{}", val);
+			Terminal::Nil
+		    },
+		    (Primitive::PrintLn, Terminal::String(s)) =>
+		    {
+			println!("{}", s);
+			Terminal::Nil
+		    },
+		    (Primitive::PrintLn, val) =>
 		    {
 			println!("{}", val);
 			Terminal::Nil
 		    },
 		    (Primitive::Random, Terminal::Int(n)) =>
 		    {
-			Terminal::Int(rand::random::<i64>().abs() % n)
+			Terminal::Int(rand::random::<i64>() % n)
+		    },
+		    (Primitive::Random, Terminal::Nil) =>
+		    {
+			Terminal::Int(rand::random::<i64>())
 		    },
 		    (_, _) => unimplemented!()
 		}

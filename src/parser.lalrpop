@@ -21,6 +21,7 @@ PrimitiveExpr: Box<Expression> =
 PrimitiveToken: Primitive =
 {
 	"print" => Primitive::Print,
+	"println" => Primitive::PrintLn,
 	"random" => Primitive::Random,
 }
 

@@ -143,6 +143,7 @@ impl fmt::Display for Primitive
 	match self
 	{
 	    Self::Print => write!(f, "print"),
+	    Self::PrintLn => write!(f, "println"),
 	    Self::Random => write!(f, "random")
 	}
     }

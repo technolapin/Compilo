@@ -1,0 +1,25 @@
+println("Script faisant tourner l'automate cellulaire élémentaire 110"),
+let
+  var iterations := 100
+  var state := random(nil)
+  var left := 0
+  var right := 0
+in
+	for it := 0 to iterations do
+	(
+	left := state << 1,
+	right := state >> 1,
+	state := ~((left & state & right)
+	       | (~left & ~state & ~right)
+	       | (~left & state & right)),
+	for i := 0 to 64 do
+	    print
+	    (
+	      if ((state>>i) & 1) = 1 then
+	        "O"
+              else
+	        " "
+	    ),
+	println("")
+	),
+end

@@ -1,4 +1,4 @@
-print("Script trouvant des nombres premiers"),
+println("Script trouvant des nombres premiers"),
 let
   var n := 100
   var is_prime := true
@@ -15,9 +15,8 @@ in
 	else
 	  false,
     if is_prime then
-      print(i)
+      println(i)
     else
       nil
-	  
   )
 end

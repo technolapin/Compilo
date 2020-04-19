@@ -119,6 +119,7 @@ impl VarsRegister
 pub enum Primitive
 {
     Print,
+    PrintLn,
     Random
 }
 

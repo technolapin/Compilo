@@ -1,4 +1,4 @@
-print("Script donnant une valeur approchée de pi"),
+println("Script donnant une valeur approchée de pi"),
 let
   var n := 100000
   var inside := 0
@@ -18,5 +18,5 @@ in
     else
       0
   ),
-  print(inside*4)
+  println(inside*4)
 end
